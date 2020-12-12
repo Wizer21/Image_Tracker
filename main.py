@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
     widget = Trackergui()
     widget.ini_gui()
-    widget.resize(800, 600)
+    widget.resize(800, 1200)
     widget.show()
 
     sys.exit(app.exec_())
