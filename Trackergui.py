@@ -1,11 +1,11 @@
-import sys
 from PySide2.QtWidgets import *
 from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PIL import Image
-from tracker import get_position
+from tracker import start_tracker
 import time
-import datetime
+from Shape import *
+
 
 class Trackergui(QWidget):
     def __init__(self):
@@ -43,15 +43,15 @@ class Trackergui(QWidget):
     @Slot()
     def calltracker(self):
         count = time.time()
-        data = get_position(self.map, self.size, self.step, self.my_color)
-        print(str(data))
+        shapes = start_tracker(self.map, self.size, self.step, self.my_color)
 
         self.polygon = QPolygon()
         self.scene = QGraphicsScene(0, 0, self.size[0], self.size[1])
 
-        for i in range(len(data)):
-            for j in range(len(data[i])):
-                self.polygon.append(QPoint(data[i][j][0], data[i][j][1]))
+        for i in range(len(shapes)):
+            for j in range(len(shapes[i])):
+                for x in range(len(shapes[i].point_cloud)):
+                    self.polygon.append(QPoint(shapes[i].point_cloud[x][0], shapes[i].point_cloud[x][1]))
 
         self.scene.addPolygon(self.polygon)
         self.graphic_view.setScene(self.scene)

@@ -1,3 +1,5 @@
+from Shape import *
+
 current_width = 0
 current_heigh = 0
 
@@ -8,8 +10,10 @@ step = 0
 
 lastClockPosition = 0
 
+items_found = []
 
-def get_position(pixel_map, size, newstep, color_to_found):
+
+def start_tracker(pixel_map, size, newstep, color_to_found):
     max_width = size[0]
     max_height = size[1]
 
@@ -30,7 +34,6 @@ def get_position(pixel_map, size, newstep, color_to_found):
 
     nbr_iterations = 0
 
-    items_found = []
     continue_analysis = True
     while continue_analysis:
         if current_width >= max_width:
@@ -44,9 +47,13 @@ def get_position(pixel_map, size, newstep, color_to_found):
         pixel = pixel_map[current_width, current_heigh]
 
         if is_pixel_matching(pixel):
-            newshape = color_matched(pixel_map)
-            if len(newshape) != 0:
-                items_found.append(newshape)
+            range_checker = is_already_found([current_width, current_heigh])
+            if range_checker != -1:
+                current_width += range_checker
+            else:
+                newshape = Shape(color_matched(pixel_map))
+                if not newshape.isEmpty:
+                    items_found.append(newshape)
 
         current_width += step
         nbr_iterations += 1
@@ -61,7 +68,7 @@ def color_matched(pixel_map):
     pos_heigh = current_heigh
 
     iterations = 0
-    drawing_shape = []
+    current_shape = []
     still_in_shape = True
     while still_in_shape:
         val = check_nearby_pixels(pos_width, pos_heigh, pixel_map, my_range)
@@ -75,14 +82,14 @@ def color_matched(pixel_map):
         if val != "not_found":
             pos_width = val[0]
             pos_heigh = val[1]
-            drawing_shape.append(val)
+            current_shape.append(val)
 
         iterations += 1
         if iterations > 50:
             still_in_shape = False
 
     # print("SHAPE" + str(drawing_shape))
-    return drawing_shape
+    return current_shape
 
 
 def check_nearby_pixels(checked_width, checked_height, pixel_map, my_range):
@@ -123,3 +130,11 @@ def check_nearby_pixels(checked_width, checked_height, pixel_map, my_range):
 
 def is_pixel_matching(pixel):
     return bottom_color <= pixel <= top_color
+
+
+def is_already_found(new_point):
+    for i in range(len(items_found)):
+        if items_found[i].is_in_range(new_point):
+            return items_found[i].width
+    return -1
+
