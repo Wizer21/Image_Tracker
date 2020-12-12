@@ -23,7 +23,7 @@ class Shape:
 
         size_list = len(newlist)
 
-        if size_list == 0:
+        if size_list < 2:
             self.isEmpty = True
             return
 
@@ -53,6 +53,8 @@ class Shape:
         self.height = max_height - min_height
 
     def is_in_range(self, point_to_check):
-        if self.top_left[0] <= point_to_check[0] <= self.top_right[0] and self.bot_left[1] <= point_to_check[1] <= self.bot_right[1]:
+        in_width = self.top_left[0] <= point_to_check[0] <= self.bot_right[0]
+        in_height = self.top_left[1] <= point_to_check[1] <= self.bot_right[1]
+        if in_width and in_height:
             return True
         return False

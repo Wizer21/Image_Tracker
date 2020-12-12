@@ -35,7 +35,7 @@ class Trackergui(QWidget):
         self.map = self.my_image.load()
         self.size = self.my_image.size
 
-        self.step = 5
+        self.step = 10
         self.my_color = (0, 255, 84)
 
         self.buttonLoad.clicked.connect(self.calltracker)
@@ -48,12 +48,17 @@ class Trackergui(QWidget):
         self.polygon = QPolygon()
         self.scene = QGraphicsScene(0, 0, self.size[0], self.size[1])
 
-        for i in range(len(shapes)):
-            for j in range(len(shapes[i])):
-                for x in range(len(shapes[i].point_cloud)):
-                    self.polygon.append(QPoint(shapes[i].point_cloud[x][0], shapes[i].point_cloud[x][1]))
+        color_pen = QPen("red")
 
-        self.scene.addPolygon(self.polygon)
+        self.scene.addPixmap(QPixmap("testtrackerlow.jpg"))
+
+        for i in range(len(shapes)):
+            self.polygon.clear()
+            for j in range(len(shapes[i].point_cloud)):
+                self.polygon.append(QPoint(shapes[i].point_cloud[j][0], shapes[i].point_cloud[j][1]))
+            self.scene.addRect(QRect(shapes[i].top_left[0], shapes[i].top_left[1], shapes[i].width, shapes[i].height), color_pen)
+            self.scene.addPolygon(self.polygon)
+
         self.graphic_view.setScene(self.scene)
 
         self.timer.setText(str(time.time() - count))
