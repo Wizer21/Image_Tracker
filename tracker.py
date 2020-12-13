@@ -141,7 +141,6 @@ def is_pixel_matching(pixel):
     return bottom_color[0] <= pixel[0] <= top_color[0] and bottom_color[1] <= pixel[1] <= top_color[1] and bottom_color[2] <= pixel[2] <= top_color[2]
 
 
-
 def is_already_found(new_point):
     for i in range(len(items_found)):
         if items_found[i].is_in_range(new_point):

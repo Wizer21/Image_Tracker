@@ -1,4 +1,3 @@
-from PyQt5.QtWidgets import QGridLayout
 from PySide2.QtWidgets import *
 from PySide2.QtCore import *
 from PySide2.QtGui import *
@@ -6,7 +5,7 @@ from PIL import Image
 from tracker import start_tracker
 import time
 from Shape import *
-
+from LabelPicker import *
 
 class Trackergui(QWidget):
     def __init__(self):
@@ -24,7 +23,7 @@ class Trackergui(QWidget):
         self.looking_for_new_color = False
 
         self.mainGridLayout = QGridLayout(self)
-        self.containImage = QLabel(self)
+        self.containImage = LabelPicker(self)
         self.graphic_view = QGraphicsView(self)
         self.scene = QGraphicsScene(self)
 
@@ -43,7 +42,7 @@ class Trackergui(QWidget):
         self.widget_color = QWidget(self)
         self.layout_color = QGridLayout(self)
         self.title_color = QLabel(self)
-        self.display_maincolor = QPushButton(self)
+        self.dynamic_color_label = QLabel(self)
         self.display_mincolor = QLabel(self)
         self.display_currentcolor = QLabel(self)
         self.display_maxcolor = QLabel(self)
@@ -76,7 +75,7 @@ class Trackergui(QWidget):
         self.settingslayout.addWidget(self.widget_color, 2, 0, 1, 2)  # COLOR
         self.widget_color.setLayout(self.layout_color)
         self.layout_color.addWidget(self.title_color, 0, 0)
-        self.layout_color.addWidget(self.display_maincolor, 0, 2)
+        self.layout_color.addWidget(self.dynamic_color_label, 0, 2)
         self.layout_color.addWidget(self.display_mincolor, 1, 0)
         self.layout_color.addWidget(self.display_currentcolor, 1, 1)
         self.layout_color.addWidget(self.display_maxcolor, 1, 2)
@@ -97,8 +96,7 @@ class Trackergui(QWidget):
         self.scroll_step.setCursor(Qt.PointingHandCursor)
 
         self.title_color.setText("Color")
-        self.display_maincolor.setText("main")
-        self.display_maincolor.setCursor(Qt.PointingHandCursor)
+        self.dynamic_color_label.setText("main")
         self.display_mincolor.setText("min")
         self.display_currentcolor.setText("mid")
         self.display_maxcolor.setText("top")
@@ -124,6 +122,9 @@ class Trackergui(QWidget):
         self.scroll_step.valueChanged.connect(self.step_changed)
         self.scroll_color.valueChanged.connect(self.new_range_color)
         self.buttonLoad.clicked.connect(self.calltracker)
+
+        self.containImage.messager.pixel_selected.connect(self.apply_newpixel_selected)
+        self.containImage.messager.transfert_position.connect(self.display_temporary_color)
 
     @Slot()
     def calltracker(self):
@@ -175,7 +176,6 @@ class Trackergui(QWidget):
         pix_color.fill(QColor(newcolor[0], newcolor[1], newcolor[2]))
 
         self.my_color = newcolor
-        self.display_maincolor.setIcon(pix_color)
         self.display_currentcolor.setPixmap(pix_color)
 
         # Set Min Color
@@ -199,3 +199,17 @@ class Trackergui(QWidget):
         self.max_color = (rgb_color[0], rgb_color[1], rgb_color[2])
         pix_color.fill(QColor(self.max_color[0], self.max_color[1], self.max_color[2]))
         self.display_maxcolor.setPixmap(pix_color)
+
+    @Slot(int, int)
+    def display_temporary_color(self, y, x):
+        color_in_pixmap = QPixmap(50, 50)
+        pixel = self.map[y, x]
+
+        color_in_pixmap.fill(QColor(pixel[0], pixel[1], pixel[2]))
+        self.dynamic_color_label.setPixmap(color_in_pixmap)
+
+    @Slot(int, int)
+    def apply_newpixel_selected(self, y, x):
+        print("getted")
+        # pixel = map[y, x]
+        self.apply_new_color(self.map[y, x])
