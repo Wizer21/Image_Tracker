@@ -13,7 +13,7 @@ lastClockPosition = 0
 items_found = []
 
 
-def start_tracker(pixel_map, size, newstep, color_to_found):
+def start_tracker(pixel_map, size, newstep, mincolor, maxcolor):
     max_width = size[0]
     max_height = size[1]
 
@@ -22,13 +22,15 @@ def start_tracker(pixel_map, size, newstep, color_to_found):
     global current_heigh
     current_heigh = 0
 
-    global top_color
-    top_color = (0, 255, 120)
     global bottom_color
-    bottom_color = (0, 225, 90)
+    bottom_color = mincolor
+    global top_color
+    top_color = maxcolor
 
     global step
     step = newstep
+
+    items_found.clear()
 
     # parcour all the map
 
@@ -63,13 +65,15 @@ def start_tracker(pixel_map, size, newstep, color_to_found):
 
 def pixel_scanner(pixel_map):
     orientation = 0
-    next_pixel = orient_my_pixel(current_width, current_heigh, orientation)
 
+    my_step = step
     current_shape = []
     iterations = 0
     keep_loop = True
+
+    next_pixel = orient_my_pixel(current_width, current_heigh, orientation)
     while keep_loop:  # Si je commence dans le vide
-        new_matching_pixel = start_scanning(next_pixel[0], next_pixel[1], orientation, pixel_map)  # Je vais chercher le pixel qui matche de la prochaine ligne
+        new_matching_pixel = start_scanning(next_pixel[0], next_pixel[1], orientation, pixel_map)  # Je vais chercher le pixel qui match de la prochaine ligne
 
         if new_matching_pixel == "item_already_found":  # Objet déjà scanné
             return "item_already_found"
@@ -134,7 +138,8 @@ def next_pixel_pos(checked_width, checked_height, orientation):
 
 
 def is_pixel_matching(pixel):
-    return bottom_color <= pixel <= top_color
+    return bottom_color[0] <= pixel[0] <= top_color[0] and bottom_color[1] <= pixel[1] <= top_color[1] and bottom_color[2] <= pixel[2] <= top_color[2]
+
 
 
 def is_already_found(new_point):
