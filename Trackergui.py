@@ -117,6 +117,7 @@ class Trackergui(QWidget):
         self.my_image = Image.open("greentest.jpg")
         self.map = self.my_image.load()
         self.size = self.my_image.size
+        self.containImage.setFixedSize(self.size[0], self.size[1])
 
         self.box_isdynamic.stateChanged.connect(self.new_state)
         self.scroll_step.valueChanged.connect(self.step_changed)
@@ -125,6 +126,7 @@ class Trackergui(QWidget):
 
         self.containImage.messager.pixel_selected.connect(self.apply_newpixel_selected)
         self.containImage.messager.transfert_position.connect(self.display_temporary_color)
+        self.containImage.messager.selecter_leaved.connect(self.apply_selecter_leaved)
 
     @Slot()
     def calltracker(self):
@@ -210,6 +212,10 @@ class Trackergui(QWidget):
 
     @Slot(int, int)
     def apply_newpixel_selected(self, y, x):
-        print("getted")
-        # pixel = map[y, x]
         self.apply_new_color(self.map[y, x])
+
+    @Slot()
+    def apply_selecter_leaved(self):
+        color_pix = QPixmap(50, 50)
+        color_pix.fill(Qt.transparent)
+        self.dynamic_color_label.setPixmap(color_pix)

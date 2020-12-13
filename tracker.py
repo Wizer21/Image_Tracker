@@ -12,24 +12,29 @@ lastClockPosition = 0
 
 items_found = []
 
+max_width = 0
+max_height = 0
 
-def start_tracker(pixel_map, size, newstep, mincolor, maxcolor):
+pixel_map = 0
+
+def start_tracker(newpixel_map, size, newstep, mincolor, maxcolor):
+    global max_width
+    global max_height
+    global current_width
+    global current_heigh
+    global bottom_color
+    global top_color
+    global step
+    global pixel_map
+
     max_width = size[0]
     max_height = size[1]
-
-    global current_width
     current_width = 0
-    global current_heigh
     current_heigh = 0
-
-    global bottom_color
     bottom_color = mincolor
-    global top_color
     top_color = maxcolor
-
-    global step
     step = newstep
-
+    pixel_map = newpixel_map
     items_found.clear()
 
     # parcour all the map
@@ -50,7 +55,7 @@ def start_tracker(pixel_map, size, newstep, mincolor, maxcolor):
 
         if is_pixel_matching(pixel):
             if not is_already_found([current_width, current_heigh]):  # La forme est elle déjà analysée
-                pixel_list = pixel_scanner(pixel_map)  # Si non, J'analyse ma nouvelle forme
+                pixel_list = pixel_scanner()  # Si non, J'analyse ma nouvelle forme
                 if pixel_list == "item_already_found":
                     current_width += step
                     nbr_iterations += 1
@@ -63,17 +68,24 @@ def start_tracker(pixel_map, size, newstep, mincolor, maxcolor):
         nbr_iterations += 1
 
 
-def pixel_scanner(pixel_map):
+def pixel_scanner():
     orientation = 0
 
     my_step = step
     current_shape = []
     iterations = 0
-    keep_loop = True
 
     next_pixel = orient_my_pixel(current_width, current_heigh, orientation)
+    keep_loop = True
     while keep_loop:  # Si je commence dans le vide
-        new_matching_pixel = start_scanning(next_pixel[0], next_pixel[1], orientation, pixel_map)  # Je vais chercher le pixel qui match de la prochaine ligne
+        if not is_pixel_in(next_pixel[0], next_pixel[1]):
+            val = border_catched(next_pixel[0], next_pixel[1])
+            current_shape.append(val[0])
+            next_pixel = [val[1], val[2]]
+            next_pixel = orient_my_pixel(next_pixel[0], next_pixel[1], orientation)
+            continue
+
+        new_matching_pixel = start_scanning(next_pixel[0], next_pixel[1], orientation)  # Je vais chercher le pixel qui match de la prochaine ligne
 
         if new_matching_pixel == "item_already_found":  # Objet déjà scanné
             return "item_already_found"
@@ -93,7 +105,7 @@ def pixel_scanner(pixel_map):
             next_pixel = orient_my_pixel(new_matching_pixel[0], new_matching_pixel[1], orientation)
 
         iterations += 1
-        if iterations > 10000:
+        if iterations > 1000:
             return current_shape
 
 
@@ -109,7 +121,12 @@ def orient_my_pixel(checked_width, checked_height, orientation):
         return [checked_width - half_step, checked_height - 1]
 
 
-def start_scanning(checked_width, checked_height, orientation, pixel_map):
+def start_scanning(checked_width, checked_height, orientation):
+    try:
+        pixel_map[checked_width, checked_height]
+    except IndexError:
+        print(str(checked_width), str(checked_height))
+
     if is_pixel_matching(pixel_map[checked_width, checked_height]):
         return "full"
 
@@ -146,4 +163,70 @@ def is_already_found(new_point):
         if items_found[i].is_in_range(new_point):
             return True
     return False
+
+def border_catched(current_width, current_heigh):
+    if max_width <= current_width:
+        current_width == max_width
+        path = get_border_path(current_width, current_heigh, "x")
+    elif current_width <= 0:
+        current_width = 0
+        path = get_border_path(current_width, current_heigh, "x")
+    elif max_height <= current_heigh:
+        current_heigh = max_height
+        path = get_border_path(current_width, current_heigh, "y")
+    elif current_heigh <= 0:
+        current_heigh = 0
+        path = get_border_path(current_width, current_heigh, "y")
+    else:
+        print("Border Error")
+
+    border_values = []
+    still_in_shape = True
+    while still_in_shape:
+        current_width += path[0]
+        current_heigh += path[1]
+        if not is_pixel_in(current_width, current_heigh):
+            test = 0
+        if not is_pixel_matching(pixel_map[current_width, current_heigh]):
+            current_width -= path[0]
+            current_heigh -= path[1]
+            return [border_values, current_width, current_heigh]
+
+        border_values.append([current_width, current_heigh])
+
+
+def get_border_path(x, y, border):
+    if border == "x":
+        if is_pixel_in(x + 1, y):
+            if is_pixel_matching(pixel_map[x + step/2, y]):
+                return  (1, 0)
+        if is_pixel_in(x - 1, y):
+            if is_pixel_matching(pixel_map[x - step/2, y]):
+                return  (-1, 0)
+    if border == "y":
+        if is_pixel_in(x, y + 1):
+            if is_pixel_matching(pixel_map[x, y + step/2]):
+                return  (0, 1)
+        if is_pixel_in(x, y - 1):
+            if is_pixel_matching(pixel_map[x, y - step/2]):
+                return  (0, -1)
+    print(str(x), str(y))
+    if border == "x":
+        if is_pixel_in(x + 1, y):
+            if is_pixel_matching(pixel_map[x + step/2, y]):
+                return  (1, 0)
+        if is_pixel_in(x - 1, y):
+            if is_pixel_matching(pixel_map[x - step/2, y]):
+                return  (-1, 0)
+    if border == "y":
+        if is_pixel_in(x, y + 1):
+            if is_pixel_matching(pixel_map[x, y + step/2]):
+                return  (0, 1)
+        if is_pixel_in(x, y - 1):
+            if is_pixel_matching(pixel_map[x, y - step/2]):
+                return  (0, -1)
+
+
+def is_pixel_in(x, y):
+    return 0 <= x <= max_width and 0 <= y <= max_height
 
