@@ -133,6 +133,7 @@ class Trackergui(QWidget):
         count = time.time()
         shapes = start_tracker(self.map, self.size, self.step, self.min_color, self.max_color)
 
+        print(str(len(shapes)))
         self.polygon = QPolygon()
         self.scene.setSceneRect(0, 0, self.size[0], self.size[1])
         self.scene.clear()

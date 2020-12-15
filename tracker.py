@@ -86,26 +86,44 @@ def micro_compile(current_row, height_iterator):
     global shapes_list
     global temporary_shapes
 
-    row_to_build = []
-    shapes_to_build = []
+    did_shape_matched = []
+    did_row_matched = []
+    for i in range(len(current_row)):
+        did_row_matched.append(False)
+    for i in range(len(temporary_shapes)):
+        did_shape_matched.append(False)
+    id_to_erase = []
+    complex_shapes_compile = {}
 
-    for i in range(len(temporary_shapes)):  # Je regarde dans mes formes en cour de construction
-        shape_matched = False
+    i = 0
+    while i < len(temporary_shapes):  # Je regarde dans mes formes en cour de construction
         for x in range(len(current_row)):  # Si certaines matches avec la nouvelle row
-            if temporary_shapes[i][0][0][0] <= current_row[x][0] <= temporary_shapes[i][0][1][0] or temporary_shapes[i][0][0][0] <= current_row[x][1] <= temporary_shapes[i][0][1][0]:
-                temporary_shapes[i].insert(0, [[current_row[x][0], height_iterator], [current_row[x][1], height_iterator]])  # Si j'ai un match j'ajoute à la position 0 afin qu'elle devienne la nouvelle clé d'entrée dans la forme
-                shape_matched = True
-            else:
-                row_to_build.append(current_row[x])
-        if not shape_matched:  # Si une forme a 0 matches sur cette ligne, je la considère comme finie et je la compile
-            shapes_to_build.append(temporary_shapes[i])
-    for i in row_to_build:  # Si certaines zones de row n'ont pas match, je crée de nouvelles formes
-        temporary_shapes.append([[[i[0], height_iterator], [i[1], height_iterator]]])
-    while shapes_to_build:
-        shapes_list.append(Shape(temporary_shapes[0]))
-        del temporary_shapes[0]
-        del shapes_to_build[0]
-
+            if temporary_shapes[i][0][0][0] <= current_row[x][0] <= temporary_shapes[i][0][1][0] or \
+                temporary_shapes[i][0][0][0] <= current_row[x][1] <= temporary_shapes[i][0][1][0] or \
+                    current_row[x][0] <= temporary_shapes[i][0][0][0] <= current_row[x][1] or \
+                    current_row[x][0] <= temporary_shapes[i][0][1][0] <= current_row[x][1]:
+                if x in complex_shapes_compile:
+                    for y in temporary_shapes[i]:
+                        complex_shapes_compile[x].append(temporary_shapes[i][y])
+                    del temporary_shapes[i]
+                    i -= 1
+                else:
+                    temporary_shapes[i].insert(0, [[current_row[x][0], height_iterator], [current_row[x][1], height_iterator]])  # J'ajoute à la position 0 pour qu'elle devienne la nouvelle clé d'entrée
+                    complex_shapes_compile[x] = temporary_shapes[i]
+                # did_shape_matched.insert(0, True)
+                # did_shape_matched[i] = True
+                did_row_matched[x] = True
+        i += 1
+    # for i in range(len(did_shape_matched)):  # Je build et détruit les formes qui n'ont pas match
+    #     if did_shape_matched[i] == False:
+    #         shapes_list.append(Shape(temporary_shapes[i]))
+    #         id_to_erase.append(i)
+    # id_to_erase.reverse()
+    # for i in range(len(id_to_erase)):  # Je build et détruit les formes qui n'ont pas match
+    #     del temporary_shapes[id_to_erase[i]]
+    for i in range(len(did_row_matched)):  # J'ajouter les zone de la row qui n'ont pas match
+        if did_row_matched[i] == False:
+            temporary_shapes.append([[[current_row[i][0], height_iterator], [current_row[i][1], height_iterator]]])
 
 def is_pixel_matching(pixel):
     return bottom_color[0] <= pixel[0] <= top_color[0] and bottom_color[1] <= pixel[1] <= top_color[1] and bottom_color[2] <= pixel[2] <= top_color[2]
