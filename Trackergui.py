@@ -23,23 +23,27 @@ class Trackergui(QWidget):
         self.looking_for_new_color = False
 
         self.mainGridLayout = QGridLayout(self)
-        self.containImage = LabelPicker(self)
+        self.containImage = LabelPicker(self)  # GRAPH
         self.graphic_view = QGraphicsView(self)
         self.scene = QGraphicsScene(self)
+        self.point_visibles = True
+        self.rect_visibles = True
+        self.middle_visible = True
+        self.shapes = []
 
         self.settingswidget = QWidget(self)
+        self.borderlayout = QGridLayout(self)
+
+        self.settigns_box = QGroupBox(self)  # SETTINGS
         self.settingslayout = QGridLayout(self)
 
-        self.label_dynamicset = QLabel(self)
-        self.box_isdynamic = QCheckBox(self)
-
-        self.widget_step = QWidget(self)
+        self.widget_step = QWidget(self)  # STEP
         self.layout_step = QGridLayout(self)
         self.title_step = QLabel(self)
         self.value_step = QLabel(self)
         self.scroll_step = QSlider(self)
 
-        self.widget_color = QWidget(self)
+        self.widget_color = QWidget(self)  # COLOR
         self.layout_color = QGridLayout(self)
         self.title_color = QLabel(self)
         self.dynamic_color_label = QLabel(self)
@@ -48,8 +52,25 @@ class Trackergui(QWidget):
         self.display_maxcolor = QLabel(self)
         self.scroll_color = QSlider(self)
 
+        self.box_build = QGroupBox(self)  # BUILD
+        self.grid_time = QGridLayout(self)
         self.timer = QLabel(self)
-        self.buttonLoad = QPushButton(self)
+        self.sec = QLabel(self)
+        self.nbr_item = QLabel(self)
+        self.display_nbr_item = QLabel(self)
+
+        self.buttonLoad = QPushButton(self)  # LOAD
+        self.quick_load = QLabel(self)
+        self.box_isdynamic = QCheckBox(self)
+
+        self.graphic_box = QGroupBox(self)  # GRAPHIC
+        self.layout_graph = QGridLayout(self)
+        self.points = QLabel(self)
+        self.point_box = QCheckBox(self)
+        self.square = QLabel(self)
+        self.square_box = QCheckBox(self)
+        self.center = QLabel(self)
+        self.center_box = QCheckBox(self)
 
     def ini_gui(self):
 
@@ -61,18 +82,18 @@ class Trackergui(QWidget):
         self.mainGridLayout.addWidget(self.settingswidget, 0, 1, 2, 1)
 
         # Build Settings
-        self.settingswidget.setLayout(self.settingslayout)
+        self.settingswidget.setLayout(self.borderlayout)
 
-        self.settingslayout.addWidget(self.label_dynamicset, 0, 0)
-        self.settingslayout.addWidget(self.box_isdynamic, 0, 1)
+        self.borderlayout.addWidget(self.settigns_box, 0, 0, 1, 2)  # BOX
+        self.settigns_box.setLayout(self.settingslayout)
 
-        self.settingslayout.addWidget(self.widget_step, 1, 0, 1, 2)  # STEP
+        self.settingslayout.addWidget(self.widget_step, 1, 0)  # STEP
         self.widget_step.setLayout(self.layout_step)
         self.layout_step.addWidget(self.title_step, 0, 0)
         self.layout_step.addWidget(self.value_step, 0, 1)
         self.layout_step.addWidget(self.scroll_step, 1, 0, 1, 2)
 
-        self.settingslayout.addWidget(self.widget_color, 2, 0, 1, 2)  # COLOR
+        self.settingslayout.addWidget(self.widget_color, 2, 0)  # COLOR
         self.widget_color.setLayout(self.layout_color)
         self.layout_color.addWidget(self.title_color, 0, 0)
         self.layout_color.addWidget(self.dynamic_color_label, 0, 2)
@@ -81,13 +102,31 @@ class Trackergui(QWidget):
         self.layout_color.addWidget(self.display_maxcolor, 1, 2)
         self.layout_color.addWidget(self.scroll_color, 2, 0, 1, 3)
 
-        self.settingslayout.addWidget(self.timer, 3, 0, 1, 2)
-        self.settingslayout.addWidget(self.buttonLoad, 4, 0, 1, 2)
+        self.borderlayout.addWidget(self.box_build, 3, 0, 1, 2)  # BUILD
+        self.box_build.setLayout(self.grid_time)
+        self.grid_time.addWidget(self.timer, 0, 0, Qt.AlignRight)
+        self.grid_time.addWidget(self.sec, 0, 1)
+        self.grid_time.addWidget(self.nbr_item, 1, 0, Qt.AlignRight)
+        self.grid_time.addWidget(self.display_nbr_item, 1, 1)
+
+        self.borderlayout.addWidget(self.buttonLoad, 4, 0, 1, 2)  # LOAD
+        self.borderlayout.addWidget(self.quick_load, 5, 0, Qt.AlignRight)
+        self.borderlayout.addWidget(self.box_isdynamic, 5, 1)
+
+        self.borderlayout.addWidget(self.graphic_box, 6, 0, 1, 2)
+        self.graphic_box.setLayout(self.layout_graph)
+        self.layout_graph.addWidget(self.points, 0, 0)
+        self.layout_graph.addWidget(self.point_box, 0, 1, Qt.AlignLeft)
+        self.layout_graph.addWidget(self.square, 1, 0)
+        self.layout_graph.addWidget(self.square_box, 1, 1, Qt.AlignLeft)
+        self.layout_graph.addWidget(self.center, 2, 0)
+        self.layout_graph.addWidget(self.center_box, 2, 1, Qt.AlignLeft)
+
 
         # Complete Settings
-        self.label_dynamicset.setText("Dynamic Settings")
+        self.settigns_box.setTitle("Settings")
 
-        self.title_step.setText("Step")
+        self.title_step.setText("Step")  # STEP
         self.value_step.setText("2")
         self.scroll_step.setOrientation(Qt.Horizontal)
         self.scroll_step.setRange(2, 40)
@@ -95,7 +134,7 @@ class Trackergui(QWidget):
         self.scroll_step.setPageStep(1)
         self.scroll_step.setCursor(Qt.PointingHandCursor)
 
-        self.title_color.setText("Color")
+        self.title_color.setText("Color") # COLOR
         self.dynamic_color_label.setText("main")
         self.display_mincolor.setText("min")
         self.display_currentcolor.setText("mid")
@@ -103,17 +142,30 @@ class Trackergui(QWidget):
         self.scroll_color.setOrientation(Qt.Horizontal)
         self.scroll_color.setCursor(Qt.PointingHandCursor)
 
+        self.box_build.setTitle("Build")  # BUILD
         self.timer.setText("0")
-        self.buttonLoad.setText("Load")
-        self.buttonLoad.setCursor(Qt.PointingHandCursor)
+        self.sec.setText(" sec")
+        self.nbr_item.setText("0")
+        self.display_nbr_item.setText(" items found")
 
-        self.settingslayout.setAlignment(Qt.AlignTop)
+        self.buttonLoad.setText("Load")  # LOAD
+        self.buttonLoad.setCursor(Qt.PointingHandCursor)
+        self.quick_load.setText("Quick load ")
+
+        self.borderlayout.setAlignment(Qt.AlignTop)
+
+        self.graphic_box.setTitle("Graphic")  # GRAPHIC
+        self.points.setText("Points")
+        self.square.setText("Square")
+        self.center.setText("Center")
+        self.point_box.setChecked(True)
+        self.square_box.setChecked(True)
+        self.center_box.setChecked(True)
 
         self.apply_new_color(self.my_color)
 
         # Build
         self.containImage.setPixmap(QPixmap("greentest.jpg"))
-
         self.my_image = Image.open("greentest.jpg")
         self.map = self.my_image.load()
         self.size = self.my_image.size
@@ -128,30 +180,18 @@ class Trackergui(QWidget):
         self.containImage.messager.transfert_position.connect(self.display_temporary_color)
         self.containImage.messager.selecter_leaved.connect(self.apply_selecter_leaved)
 
+        self.point_box.stateChanged.connect(self.show_hide_points)
+        self.square_box.stateChanged.connect(self.show_hide_rects)
+
     @Slot()
     def calltracker(self):
         count = time.time()
-        shapes = start_tracker(self.map, self.size, self.step, self.min_color, self.max_color)
+        self.shapes = start_tracker(self.map, self.size, self.step, self.min_color, self.max_color)
 
-        print(str(len(shapes)))
-        self.polygon = QPolygon()
-        self.scene.setSceneRect(0, 0, self.size[0], self.size[1])
-        self.scene.clear()
+        self.build_graph()
 
-        color_pen = QPen(Qt.red)
-
-        self.scene.addPixmap(QPixmap("testtrackerlow.jpg"))
-
-        for i in range(len(shapes)):
-            self.polygon.clear()
-            for j in range(len(shapes[i].point_cloud)):
-                self.polygon.append(QPoint(shapes[i].point_cloud[j][0], shapes[i].point_cloud[j][1]))
-            self.scene.addRect(QRect(shapes[i].top_left[0], shapes[i].top_left[1], shapes[i].width, shapes[i].height), color_pen)
-            self.scene.addPolygon(self.polygon)
-
-        self.graphic_view.setScene(self.scene)
-
-        self.timer.setText(str(time.time() - count))
+        self.timer.setText(str(round(time.time() - count, 5)))
+        self.nbr_item.setText(str(len(self.shapes)))
 
     @Slot(int)
     def step_changed(self, value):
@@ -214,9 +254,48 @@ class Trackergui(QWidget):
     @Slot(int, int)
     def apply_newpixel_selected(self, y, x):
         self.apply_new_color(self.map[y, x])
+        if self.are_dynamic_settings:
+            self.calltracker()
 
     @Slot()
     def apply_selecter_leaved(self):
         color_pix = QPixmap(50, 50)
         color_pix.fill(Qt.transparent)
         self.dynamic_color_label.setPixmap(color_pix)
+
+    @Slot(int)
+    def show_hide_points(self, value):
+        if value == 2:
+            self.point_visibles = True
+        else:
+            self.point_visibles = False
+        self.build_graph()
+
+    @Slot(int)
+    def show_hide_rects(self, value):
+        if value == 2:
+            self.rect_visibles = True
+        else:
+            self.rect_visibles = False
+        self.build_graph()
+
+    def build_graph(self):
+        self.scene.setSceneRect(0, 0, self.size[0], self.size[1])
+        self.scene.clear()
+
+        color_pen = QPen(Qt.red)
+
+        self.scene.addPixmap(QPixmap("testtrackerlow.jpg"))
+
+        polygon = QPolygon()
+
+        for i in range(len(self.shapes)):
+            if self.point_visibles:
+                polygon.clear()
+                for j in range(len(self.shapes[i].point_cloud)):
+                    polygon.append(QPoint(self.shapes[i].point_cloud[j][0], self.shapes[i].point_cloud[j][1]))
+            if self.rect_visibles:
+                self.scene.addRect(QRect(self.shapes[i].top_left[0], self.shapes[i].top_left[1], self.shapes[i].width, self.shapes[i].height), color_pen)
+            self.scene.addPolygon(polygon)
+
+        self.graphic_view.setScene(self.scene)
