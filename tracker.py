@@ -86,13 +86,9 @@ def micro_compile(current_row, height_iterator):
     global shapes_list
     global temporary_shapes
 
-    did_shape_matched = []
     did_row_matched = []
     for i in range(len(current_row)):
         did_row_matched.append(False)
-    for i in range(len(temporary_shapes)):
-        did_shape_matched.append(False)
-    id_to_erase = []
     complex_shapes_compile = {}
 
     i = 0
@@ -103,24 +99,15 @@ def micro_compile(current_row, height_iterator):
                     current_row[x][0] <= temporary_shapes[i][0][0][0] <= current_row[x][1] or \
                     current_row[x][0] <= temporary_shapes[i][0][1][0] <= current_row[x][1]:
                 if x in complex_shapes_compile:
-                    for y in temporary_shapes[i]:
+                    for y in range(len(temporary_shapes[i])):
                         complex_shapes_compile[x].append(temporary_shapes[i][y])
                     del temporary_shapes[i]
                     i -= 1
                 else:
                     temporary_shapes[i].insert(0, [[current_row[x][0], height_iterator], [current_row[x][1], height_iterator]])  # J'ajoute à la position 0 pour qu'elle devienne la nouvelle clé d'entrée
                     complex_shapes_compile[x] = temporary_shapes[i]
-                # did_shape_matched.insert(0, True)
-                # did_shape_matched[i] = True
                 did_row_matched[x] = True
         i += 1
-    # for i in range(len(did_shape_matched)):  # Je build et détruit les formes qui n'ont pas match
-    #     if did_shape_matched[i] == False:
-    #         shapes_list.append(Shape(temporary_shapes[i]))
-    #         id_to_erase.append(i)
-    # id_to_erase.reverse()
-    # for i in range(len(id_to_erase)):  # Je build et détruit les formes qui n'ont pas match
-    #     del temporary_shapes[id_to_erase[i]]
     for i in range(len(did_row_matched)):  # J'ajouter les zone de la row qui n'ont pas match
         if did_row_matched[i] == False:
             temporary_shapes.append([[[current_row[i][0], height_iterator], [current_row[i][1], height_iterator]]])
