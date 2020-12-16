@@ -53,11 +53,13 @@ class Trackergui(QWidget):
         self.scroll_color = QSlider(self)
 
         self.box_build = QGroupBox(self)  # BUILD
-        self.grid_time = QGridLayout(self)
-        self.timer = QLabel(self)
-        self.sec = QLabel(self)
-        self.nbr_item = QLabel(self)
+        self.grid_build = QGridLayout(self)
+        self.display_calctime = QLabel(self)
+        self.calctime = QLabel(self)
+        self.graph_sec = QLabel(self)
+        self.display_graph_sec = QLabel(self)
         self.display_nbr_item = QLabel(self)
+        self.nbr_item = QLabel(self)
 
         self.buttonLoad = QPushButton(self)  # LOAD
         self.quick_load = QLabel(self)
@@ -103,11 +105,13 @@ class Trackergui(QWidget):
         self.layout_color.addWidget(self.scroll_color, 2, 0, 1, 3)
 
         self.borderlayout.addWidget(self.box_build, 3, 0, 1, 2)  # BUILD
-        self.box_build.setLayout(self.grid_time)
-        self.grid_time.addWidget(self.timer, 0, 0, Qt.AlignRight)
-        self.grid_time.addWidget(self.sec, 0, 1)
-        self.grid_time.addWidget(self.nbr_item, 1, 0, Qt.AlignRight)
-        self.grid_time.addWidget(self.display_nbr_item, 1, 1)
+        self.box_build.setLayout(self.grid_build)
+        self.grid_build.addWidget(self.calctime, 0, 0)
+        self.grid_build.addWidget(self.display_calctime, 1, 0)
+        self.grid_build.addWidget(self.graph_sec, 2, 0)
+        self.grid_build.addWidget(self.display_graph_sec, 3, 0)
+        self.grid_build.addWidget(self.nbr_item, 4, 0)
+        self.grid_build.addWidget(self.display_nbr_item, 5, 0)
 
         self.borderlayout.addWidget(self.buttonLoad, 4, 0, 1, 2)  # LOAD
         self.borderlayout.addWidget(self.quick_load, 5, 0, Qt.AlignRight)
@@ -134,7 +138,7 @@ class Trackergui(QWidget):
         self.scroll_step.setPageStep(1)
         self.scroll_step.setCursor(Qt.PointingHandCursor)
 
-        self.title_color.setText("Color") # COLOR
+        self.title_color.setText("Color")  # COLOR
         self.dynamic_color_label.setText("main")
         self.display_mincolor.setText("min")
         self.display_currentcolor.setText("mid")
@@ -143,10 +147,12 @@ class Trackergui(QWidget):
         self.scroll_color.setCursor(Qt.PointingHandCursor)
 
         self.box_build.setTitle("Build")  # BUILD
-        self.timer.setText("0")
-        self.sec.setText(" sec")
-        self.nbr_item.setText("0")
-        self.display_nbr_item.setText(" items found")
+        self.calctime.setText("Calc time")
+        self.display_calctime.setText("0")
+        self.graph_sec.setText("Display time")
+        self.display_graph_sec.setText("0")
+        self.nbr_item.setText("Items found")
+        self.display_nbr_item.setText("0")
 
         self.buttonLoad.setText("Load")  # LOAD
         self.buttonLoad.setCursor(Qt.PointingHandCursor)
@@ -182,16 +188,19 @@ class Trackergui(QWidget):
 
         self.point_box.stateChanged.connect(self.show_hide_points)
         self.square_box.stateChanged.connect(self.show_hide_rects)
+        self.center_box.stateChanged.connect(self.show_hide_middle)
 
     @Slot()
     def calltracker(self):
         count = time.time()
         self.shapes = start_tracker(self.map, self.size, self.step, self.min_color, self.max_color)
+        self.display_calctime.setText(str(round(time.time() - count, 5)))
 
+        count = time.time()
         self.build_graph()
+        self.display_graph_sec.setText(str(round(time.time() - count, 5)))
 
-        self.timer.setText(str(round(time.time() - count, 5)))
-        self.nbr_item.setText(str(len(self.shapes)))
+        self.display_nbr_item.setText(str(len(self.shapes)))
 
     @Slot(int)
     def step_changed(self, value):
@@ -279,23 +288,37 @@ class Trackergui(QWidget):
             self.rect_visibles = False
         self.build_graph()
 
+    @Slot(int)
+    def show_hide_middle(self, value):
+        if value == 2:
+            self.middle_visible = True
+        else:
+            self.middle_visible = False
+        self.build_graph()
+
     def build_graph(self):
         self.scene.setSceneRect(0, 0, self.size[0], self.size[1])
         self.scene.clear()
 
-        color_pen = QPen(Qt.red)
+        color_point = QPen(Qt.black)
+        point_with = 2
+        color_square = QPen("#ff0048")
+        color_square.setWidth(2)
+        color_middle = QPen("#0084ff")
+        color_middle.setWidth(2)
+        middle_width = 10
 
         self.scene.addPixmap(QPixmap("testtrackerlow.jpg"))
 
-        polygon = QPolygon()
-
         for i in range(len(self.shapes)):
             if self.point_visibles:
-                polygon.clear()
                 for j in range(len(self.shapes[i].point_cloud)):
-                    polygon.append(QPoint(self.shapes[i].point_cloud[j][0], self.shapes[i].point_cloud[j][1]))
+                    self.scene.addLine(self.shapes[i].point_cloud[j][0] - point_with, self.shapes[i].point_cloud[j][1], self.shapes[i].point_cloud[j][0] + point_with, self.shapes[i].point_cloud[j][1], color_point)
+                    self.scene.addLine(self.shapes[i].point_cloud[j][0], self.shapes[i].point_cloud[j][1] - point_with, self.shapes[i].point_cloud[j][0], self.shapes[i].point_cloud[j][1] + point_with, color_point)
             if self.rect_visibles:
-                self.scene.addRect(QRect(self.shapes[i].top_left[0], self.shapes[i].top_left[1], self.shapes[i].width, self.shapes[i].height), color_pen)
-            self.scene.addPolygon(polygon)
+                self.scene.addRect(QRect(self.shapes[i].top_left[0], self.shapes[i].top_left[1], self.shapes[i].width, self.shapes[i].height), color_square)
+            if self.middle_visible:
+                self.scene.addLine(self.shapes[i].center[0] - middle_width, self.shapes[i].center[1], self.shapes[i].center[0] + middle_width, self.shapes[i].center[1], color_middle)
+                self.scene.addLine(self.shapes[i].center[0], self.shapes[i].center[1] - middle_width, self.shapes[i].center[0], self.shapes[i].center[1] + middle_width, color_middle)
 
         self.graphic_view.setScene(self.scene)

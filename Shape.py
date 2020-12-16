@@ -36,7 +36,7 @@ class Shape:
         self.top_right = [self.max_width, self.min_height]
         self.bot_left = [self.min_width, self.max_height]
         self.bot_right = [self.max_width, self.max_height]
-        self.center = [round(total_widht/size_list), round(total_height/size_list)]
+        self.center = [round(total_widht/(size_list * 2)), round(total_height/(size_list * 2))]
         self.width = self.max_width - self.min_width
         self.height = self.max_height - self.min_height
 
