@@ -99,9 +99,9 @@ class Trackergui(QWidget):
         self.widget_color.setLayout(self.layout_color)
         self.layout_color.addWidget(self.title_color, 0, 0)
         self.layout_color.addWidget(self.dynamic_color_label, 0, 2)
-        self.layout_color.addWidget(self.display_mincolor, 1, 0)
+        self.layout_color.addWidget(self.display_mincolor, 1, 0, Qt.AlignRight)
         self.layout_color.addWidget(self.display_currentcolor, 1, 1)
-        self.layout_color.addWidget(self.display_maxcolor, 1, 2)
+        self.layout_color.addWidget(self.display_maxcolor, 1, 2, Qt.AlignLeft)
         self.layout_color.addWidget(self.scroll_color, 2, 0, 1, 3)
 
         self.borderlayout.addWidget(self.box_build, 3, 0, 1, 2)  # BUILD
@@ -139,10 +139,11 @@ class Trackergui(QWidget):
         self.scroll_step.setCursor(Qt.PointingHandCursor)
 
         self.title_color.setText("Color")  # COLOR
-        self.dynamic_color_label.setText("main")
-        self.display_mincolor.setText("min")
-        self.display_currentcolor.setText("mid")
-        self.display_maxcolor.setText("top")
+        self.dynamic_color_label.setFixedSize(80, 40)
+        self.display_mincolor.setFixedSize(80, 40)
+        self.display_currentcolor.setFixedSize(80, 40)
+        self.display_maxcolor.setFixedSize(80, 40)
+        self.layout_color.setContentsMargins(0, 0, 0, 0)
         self.scroll_color.setOrientation(Qt.Horizontal)
         self.scroll_color.setCursor(Qt.PointingHandCursor)
 
@@ -224,7 +225,7 @@ class Trackergui(QWidget):
             self.calltracker()
 
     def apply_new_color(self, newcolor):
-        pix_color = QPixmap(50, 50)
+        pix_color = QPixmap(100, 100)
         pix_color.fill(QColor(newcolor[0], newcolor[1], newcolor[2]))
 
         self.my_color = newcolor
@@ -254,7 +255,7 @@ class Trackergui(QWidget):
 
     @Slot(int, int)
     def display_temporary_color(self, y, x):
-        color_in_pixmap = QPixmap(50, 50)
+        color_in_pixmap = QPixmap(100, 100)
         pixel = self.map[y, x]
 
         color_in_pixmap.fill(QColor(pixel[0], pixel[1], pixel[2]))
