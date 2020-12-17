@@ -9,7 +9,7 @@ id = 0
 max_height = 0
 shapes_list = []
 temporary_shapes = []
-splitted_shapes = []
+splitted_shapes = {}
 
 def start_tracker(newpixel_map, size, newstep, mincolor, maxcolor):
     global max_height
@@ -67,6 +67,7 @@ def compile_items(list_of_rows):
     global shapes_list
     global temporary_shapes
     global id
+    global splitted_shapes
 
     height_iterator = 0
     while height_iterator <= max_height:
@@ -81,9 +82,23 @@ def compile_items(list_of_rows):
                     id += 1
         else:  # Si une ligne est complétement vide, je compile toutes les formes
             if len(temporary_shapes) != 0:
-                for i in range(len(temporary_shapes)):
-                    del temporary_shapes[i][0]
-                    shapes_list.append(Shape(temporary_shapes[i]))
+                i = 0
+                temporary_shapes.reverse()
+                while i < len(temporary_shapes):
+                    if temporary_shapes[i][0] in splitted_shapes:
+                        id_parent = splitted_shapes[temporary_shapes[i][0]]
+                        for y in range(len(temporary_shapes)):
+                            if temporary_shapes[i][0] == id_parent:
+                                parent = temporary_shapes[y]
+                        del temporary_shapes[i][0]
+                        for y in range(len(temporary_shapes[i])):
+                            parent.append(temporary_shapes[i][y])
+                        del temporary_shapes[i]
+                        i -= 1
+                    else:
+                        del temporary_shapes[i][0]
+                        shapes_list.append(Shape(temporary_shapes[i]))
+                    i += 1
                 temporary_shapes.clear()
 
         height_iterator += step
@@ -97,37 +112,39 @@ def micro_compile(current_row, height_iterator):
     global id
     global splitted_shapes
 
-
     did_row_matched = []
     for i in range(len(current_row)):
         did_row_matched.append(False)
-    complex_shapes_compile = {}
-    find_splitted_shapes = {}
+    find_split_in = {}
+    find_split_out = False
 
     i = 0
     while i < len(temporary_shapes):  # Je regarde dans mes formes en cour de construction
+        find_split_out = False
         for x in range(len(current_row)):  # Si certaines matches avec la nouvelle row
             if temporary_shapes[i][1][0][0] <= current_row[x][0] <= temporary_shapes[i][1][1][0] or \
                 temporary_shapes[i][1][0][0] <= current_row[x][1] <= temporary_shapes[i][1][1][0] or \
                     current_row[x][0] <= temporary_shapes[i][1][0][0] <= current_row[x][1] or \
                     current_row[x][0] <= temporary_shapes[i][1][1][0] <= current_row[x][1]:
-                if i in find_splitted_shapes:
+                if find_split_out:
                     temporary_shapes.append([id, [[current_row[x][0], height_iterator], [current_row[x][1], height_iterator]]])
-
-                    splitted_shapes{id} = find_splitted_shapes[i]
-                    splitted_shapes{find_splitted_shapes[i]} = [id]
-
+                    if temporary_shapes[i][0] in splitted_shapes:
+                        parent_id = splitted_shapes[temporary_shapes[i][0]]
+                        splitted_shapes[id] = parent_id
+                    else:
+                        splitted_shapes[id] = temporary_shapes[i][0]
                     id += 1
-                elif x in complex_shapes_compile:
-                    complex_shapes_compile[x].append(temporary_shapes[i])
-                    # for y in range(len(temporary_shapes[i])):
-                    #     complex_shapes_compile[x].append(temporary_shapes[i][y])
+                elif x in find_split_in:
+                    del temporary_shapes[i][0]
+                    for y in range(len(temporary_shapes[i])):
+                        find_split_in[x].append(temporary_shapes[i][y])
                     del temporary_shapes[i]
                     i -= 1
+                    find_split_out = True
                 else:
                     temporary_shapes[i].insert(1, [[current_row[x][0], height_iterator], [current_row[x][1], height_iterator]])  # J'ajoute à la position 0 pour qu'elle devienne la nouvelle clé d'entrée
-                    complex_shapes_compile[x] = temporary_shapes[i]
-                    find_splitted_shapes[i] = temporary_shapes[i][0]
+                    find_split_in[x] = temporary_shapes[i]
+                    find_split_out = True
                 did_row_matched[x] = True
         i += 1
     for i in range(len(did_row_matched)):  # J'ajouter les zone de la row qui n'ont pas match
