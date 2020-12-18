@@ -80,7 +80,8 @@ def compile_items(list_of_rows):
         else:  # Si une ligne est complétement vide, je compile toutes les formes
             if len(temporary_shapes) != 0:
                 for i in range(len(temporary_shapes)):
-                    shapes_list.append(Shape(temporary_shapes[i].point_list))
+                    if len(temporary_shapes[i].point_list) != 0:
+                        shapes_list.append(Shape(temporary_shapes[i].point_list))
                 temporary_shapes.clear()
 
         height_iterator += step
@@ -99,7 +100,7 @@ def micro_compile(current_row, height_iterator):
     find_split_in = {}
 
     i = 0
-    while i <len(temporary_shapes):  # Je regarde dans mes formes en cour de construction
+    while i < len(temporary_shapes):  # Je regarde dans mes formes en cour de construction
         for z in range(len(temporary_shapes[i].entries)):
             for x in range(len(current_row)):  # Si certaines matches avec la nouvelle row
                 if temporary_shapes[i].entries[z][0][0] <= current_row[x][0] <= temporary_shapes[i].entries[z][1][0] or \
@@ -110,8 +111,9 @@ def micro_compile(current_row, height_iterator):
                         if find_split_in[x] == i:
                             continue
                         else:
-                            temporary_shapes[find_split_in[x]].import_new_list(temporary_shapes[i].point_list)
-                            temporary_shapes[find_split_in[x]].new_entries.append(temporary_shapes[i].entries)
+                            if len(temporary_shapes[i].point_list) != 0:
+                                temporary_shapes[find_split_in[x]].import_new_list(temporary_shapes[i].point_list)
+                            temporary_shapes[find_split_in[x]].import_entries(temporary_shapes[i].entries)
                         del temporary_shapes[i]
                         i -= 1
                     else:
@@ -121,12 +123,12 @@ def micro_compile(current_row, height_iterator):
         i += 1
 
     for i in range(len(temporary_shapes)):
-        temporary_shapes[i].push_entries()
+        if len(temporary_shapes[i].new_entries) != 0:
+            temporary_shapes[i].push_entries()
 
     for i in range(len(did_row_matched)):  # J'ajouter les zone de la row qui n'ont pas match
         if did_row_matched[i] == False:
             temporary_shapes.append(Temporary_shape([[[current_row[i][0], height_iterator], [current_row[i][1], height_iterator]]]))
-    i += 1
 
 
 def is_pixel_matching(pixel):
