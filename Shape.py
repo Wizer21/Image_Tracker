@@ -23,20 +23,16 @@ class Shape:
         size_list = len(newlist)
 
         for i in range(size_list):
-            total_widht += newlist[i][0][0]
-            total_height += newlist[i][0][1]
-            self.check_max_values(newlist[i][0][0], newlist[i][0][1])
-            self.point_cloud.append(newlist[i][0])
-            total_widht += newlist[i][1][0]
-            total_height += newlist[i][1][1]
-            self.check_max_values(newlist[i][1][0], newlist[i][1][1])
-            self.point_cloud.append(newlist[i][1])
+            total_widht += newlist[i][0]
+            total_height += newlist[i][1]
+            self.check_max_values(newlist[i][0], newlist[i][1])
+            self.point_cloud.append(newlist[i])
 
         self.top_left = [self.min_width, self.min_height]
         self.top_right = [self.max_width, self.min_height]
         self.bot_left = [self.min_width, self.max_height]
         self.bot_right = [self.max_width, self.max_height]
-        self.center = [round(total_widht/(size_list * 2)), round(total_height/(size_list * 2))]
+        self.center = [round(total_widht/size_list), round(total_height/size_list)]
         self.width = self.max_width - self.min_width
         self.height = self.max_height - self.min_height
 
