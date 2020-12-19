@@ -9,24 +9,26 @@ class Shape:
         self.point_cloud = []
         self.width = 0
         self.height = 0
-        self.isEmpty = False
         self.min_width = 0
         self.min_height = 0
         self.max_width = 0
         self.max_height = 0
-        self.build_shape(newlist)
 
-    def build_shape(self, newlist):
+        for i in range(len(newlist)):
+            self.point_cloud.append(newlist[i])
+
+        self.build_shape()
+
+    def build_shape(self):
         total_widht = 0
         total_height = 0
 
-        size_list = len(newlist)
+        size_list = len(self.point_cloud)
 
         for i in range(size_list):
-            total_widht += newlist[i][0]
-            total_height += newlist[i][1]
-            self.check_max_values(newlist[i][0], newlist[i][1])
-            self.point_cloud.append(newlist[i])
+            total_widht += self.point_cloud[i][0]
+            total_height += self.point_cloud[i][1]
+            self.check_max_values(self.point_cloud[i][0], self.point_cloud[i][1])
 
         self.top_left = [self.min_width, self.min_height]
         self.top_right = [self.max_width, self.min_height]
@@ -56,3 +58,22 @@ class Shape:
             self.min_width = new_widht
         if self.min_height > new_height:
             self.min_height = new_height
+
+    def import_points(self, new_list):
+        for i in range(len(new_list)):
+            self.point_cloud.append(new_list[i])
+        self.reset_values()
+        self.build_shape()
+
+    def reset_values(self):
+        self.top_left = [0, 0]
+        self.top_right = [0, 0]
+        self.bot_left = [0, 0]
+        self.bot_right = [0, 0]
+        self.center = [0, 0]
+        self.width = 0
+        self.height = 0
+        self.min_width = 0
+        self.min_height = 0
+        self.max_width = 0
+        self.max_height = 0

@@ -10,8 +10,10 @@ max_height = 0
 shapes_list = []
 temporary_shapes = []
 splitted_shapes = {}
+compiles_shapes = False
 
-def start_tracker(newpixel_map, size, newstep, mincolor, maxcolor):
+
+def start_tracker(newpixel_map, size, newstep, mincolor, maxcolor, might_compiles_shapes):
     global max_height
     global bottom_color
     global top_color
@@ -19,6 +21,7 @@ def start_tracker(newpixel_map, size, newstep, mincolor, maxcolor):
     global shapes_list
     global temporary_shapes
     global splitted_shapes
+    global compiles_shapes
 
     max_width = size[0]
     max_height = size[1]
@@ -28,6 +31,7 @@ def start_tracker(newpixel_map, size, newstep, mincolor, maxcolor):
     top_color = maxcolor
     step = newstep
     pixel_map = newpixel_map
+    compiles_shapes = might_compiles_shapes
 
     list_of_rows = {}
     last_row = []
@@ -68,7 +72,6 @@ def compile_items(list_of_rows):
 
     height_iterator = 0
     while height_iterator <= max_height:
-
         if height_iterator in list_of_rows:  # Si j'ai des valeurs sur la ligne actuelle
             current_row = list_of_rows[height_iterator]
             if len(temporary_shapes) != 0:  # Si j'ai des formes en stock
@@ -77,14 +80,15 @@ def compile_items(list_of_rows):
                 for i in range(len(current_row)):
                     temporary_shapes.append(Temporary_shape([[[list_of_rows[height_iterator][i][0], height_iterator], [list_of_rows[height_iterator][i][1], height_iterator]]]))
 
-        else:  # Si une ligne est complétement vide, je compile toutes les formes
-            if len(temporary_shapes) != 0:
-                for i in range(len(temporary_shapes)):
-                    if len(temporary_shapes[i].point_list) != 0:
-                        shapes_list.append(Shape(temporary_shapes[i].point_list))
-                temporary_shapes.clear()
+        else:
+            push_and_close()  # Pousse les entrées, et compiles les formes terminées
 
         height_iterator += step
+
+    push_and_close()
+
+    if compiles_shapes:
+        shape_compiler()
 
     return shapes_list
 
@@ -113,21 +117,18 @@ def micro_compile(current_row, height_iterator):
                         else:
                             if len(temporary_shapes[i].point_list) != 0:
                                 temporary_shapes[find_split_in[x]].import_new_list(temporary_shapes[i].point_list)
-                            temporary_shapes[find_split_in[x]].import_entries(temporary_shapes[i].entries)
-                        del temporary_shapes[i]
-                        i -= 1
+                                temporary_shapes[find_split_in[x]].import_entries(temporary_shapes[i].entries)
+                                del temporary_shapes[i]
+                                i -= 1
                     else:
                         temporary_shapes[i].new_entries.append([[current_row[x][0], height_iterator], [current_row[x][1], height_iterator]])  # J'ajoute à la position 0 pour qu'elle devienne la nouvelle clé d'entrée
                         find_split_in[x] = i
                     did_row_matched[x] = True
         i += 1
 
-    for i in range(len(temporary_shapes)):
-        if len(temporary_shapes[i].new_entries) != 0:
-            temporary_shapes[i].push_entries()
-
+    push_and_close()  # Pousse les entrées, et compiles les formes terminées
     for i in range(len(did_row_matched)):  # J'ajouter les zone de la row qui n'ont pas match
-        if did_row_matched[i] == False:
+        if not did_row_matched[i]:
             temporary_shapes.append(Temporary_shape([[[current_row[i][0], height_iterator], [current_row[i][1], height_iterator]]]))
 
 
@@ -135,4 +136,37 @@ def is_pixel_matching(pixel):
     return bottom_color[0] <= pixel[0] <= top_color[0] and bottom_color[1] <= pixel[1] <= top_color[1] and bottom_color[2] <= pixel[2] <= top_color[2]
 
 
+def push_and_close():
+    i = 0
+    while i < len(temporary_shapes):
+        if len(temporary_shapes[i].new_entries) != 0:
+            temporary_shapes[i].push_entries()
+        else:
+            temporary_shapes[i].close_entries()
+            shapes_list.append(Shape(temporary_shapes[i].point_list))
+            del temporary_shapes[i]
+            i -= 1
+        i += 1
 
+
+def shape_compiler():
+    global shapes_list
+
+    checked_range = step * 10
+
+    i = 0
+    y = 0
+    while i < len(shapes_list):
+        while y < len(shapes_list):
+            if y != i:
+                if shapes_list[i].top_left[0] - checked_range < shapes_list[y].top_left[0] < shapes_list[i].bot_right[0] + checked_range or \
+                shapes_list[i].top_left[0] - checked_range < shapes_list[y].bot_right[0] < shapes_list[i].bot_right[0] + checked_range and \
+                shapes_list[i].top_left[1] - checked_range < shapes_list[y].top_left[1] < shapes_list[i].bot_right[1] + checked_range or \
+                shapes_list[i].top_left[1] - checked_range < shapes_list[y].bot_right[1] < shapes_list[i].bot_right[1] + checked_range:
+                    shapes_list[i].import_points(shapes_list[y].point_cloud)
+                    del shapes_list[y]
+                    if i != 0:
+                        i -= 1
+                    y -= 1
+            y += 1
+        i += 1
