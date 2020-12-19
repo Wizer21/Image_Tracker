@@ -23,7 +23,7 @@ class Trackergui(QMainWindow):
         self.color_range = 0
         self.looking_for_new_color = False
         self.image_url = "banana.jpg"
-        self.low_pixmap = QPixmap("bananalow.jpg")
+        self.low_pixmap = QPixmap()
 
         self.main_widget = QWidget(self)
         self.mainGridLayout = QGridLayout(self)
@@ -215,6 +215,8 @@ class Trackergui(QMainWindow):
         self.square_box.stateChanged.connect(self.show_hide_rects)
         self.center_box.stateChanged.connect(self.show_hide_middle)
 
+        self.load_image()
+
     @Slot()
     def calltracker(self):
         count = time.time()
@@ -343,7 +345,7 @@ class Trackergui(QMainWindow):
         self.scene.setSceneRect(0, 0, self.size[0], self.size[1])
         self.scene.clear()
 
-        color_point = QPen(Qt.black)
+        color_point = QPen(Qt.white)
         point_with = 2
         color_square = QPen("#ff0048")
         color_square.setWidth(2)
@@ -367,6 +369,19 @@ class Trackergui(QMainWindow):
         self.graphic_view.setScene(self.scene)
 
     def load_image(self):
+        image = QImage(self.image_url)
+        painter = QPainter()
+
+        painter.begin(image)
+        painter.setCompositionMode(QPainter.CompositionMode_DestinationIn)
+        painter.fillRect(image.rect(), QColor(0, 0, 0, 50))
+        painter.end()
+
+        self.scene.clear()
+        self.low_pixmap = QPixmap(image)
+        self.scene.addPixmap(self.low_pixmap)
+        self.graphic_view.setScene(self.scene)
+
         self.containImage.setPixmap(QPixmap(self.image_url))
         self.my_image = Image.open(self.image_url)
         self.map = self.my_image.load()
@@ -384,11 +399,3 @@ class Trackergui(QMainWindow):
         self.image_url = container[0]
 
         self.load_image()
-
-        self.low_pixmap = QPixmap(self.image_url)
-        painter = QPainter()
-
-        painter.drawPixmap(QRect(0, 0, self.size[0], self.size[1]), self.low_pixmap)
-        painter.translate(0, 200)
-        painter.drawPixmap(QRect(0, 0, self.size[0], self.size[1]), self.low_pixmap)
-        painter.fillRect(QRect(0, 0, self.size[0], self.size[1]), QBrush(QColor(0, 0, 0, 200)))
