@@ -7,23 +7,30 @@ import time
 from Shape import *
 from LabelPicker import *
 
-class Trackergui(QWidget):
+class Trackergui(QMainWindow):
     def __init__(self):
-        QWidget.__init__(self)
+        QMainWindow.__init__(self)
         self.step = 0
         self.my_color = (0, 0, 0)
         self.map = 0
         self.size = 0
         self.step = 2
+        self.compiler_value = 0
         self.are_dynamic_settings = False
         self.min_color = (0, 255, 84)
         self.my_color = (0, 255, 84)
         self.max_color = (0, 255, 84)
         self.color_range = 0
         self.looking_for_new_color = False
-        self.did_compile_shapes = False
+        self.image_url = "banana.jpg"
+        self.low_pixmap = QPixmap("bananalow.jpg")
 
+        self.main_widget = QWidget(self)
         self.mainGridLayout = QGridLayout(self)
+        self.menu_bar = QMenuBar(self)
+        self.file_manage = QMenu(self)
+        self.action_new_file = QAction(self)
+
         self.containImage = LabelPicker(self)  # GRAPH
         self.graphic_view = QGraphicsView(self)
         self.scene = QGraphicsScene(self)
@@ -43,6 +50,9 @@ class Trackergui(QWidget):
         self.title_step = QLabel(self)
         self.value_step = QLabel(self)
         self.scroll_step = QSlider(self)
+        self.combine_shapes = QLabel(self)
+        self.scroll_combine = QSlider(self)
+        self.display_combine_range = QLabel(self)
 
         self.widget_color = QWidget(self)  # COLOR
         self.layout_color = QGridLayout(self)
@@ -65,8 +75,6 @@ class Trackergui(QWidget):
         self.buttonLoad = QPushButton(self)  # LOAD
         self.quick_load = QLabel(self)
         self.box_isdynamic = QCheckBox(self)
-        self.combine_shapes = QLabel(self)
-        self.box_combine = QCheckBox(self)
 
         self.graphic_box = QGroupBox(self)  # GRAPHIC
         self.layout_graph = QGridLayout(self)
@@ -77,14 +85,19 @@ class Trackergui(QWidget):
         self.center = QLabel(self)
         self.center_box = QCheckBox(self)
 
+
     def ini_gui(self):
 
         #  Build Main
-        self.setLayout(self.mainGridLayout)
+        self.setCentralWidget(self.main_widget)
+        self.main_widget.setLayout(self.mainGridLayout)
 
+        #  IMAGES
         self.mainGridLayout.addWidget(self.containImage, 0, 0)
-        self.mainGridLayout.addWidget(self.graphic_view, 1, 0)
-        self.mainGridLayout.addWidget(self.settingswidget, 0, 1, 2, 1)
+        self.load_image()
+        self.setMenuBar(self.menu_bar)
+        self.menu_bar.addMenu(self.file_manage)
+        self.file_manage.addAction(self.action_new_file)
 
         # Build Settings
         self.settingswidget.setLayout(self.borderlayout)
@@ -97,6 +110,9 @@ class Trackergui(QWidget):
         self.layout_step.addWidget(self.title_step, 0, 0)
         self.layout_step.addWidget(self.value_step, 0, 1)
         self.layout_step.addWidget(self.scroll_step, 1, 0, 1, 2)
+        self.layout_step.addWidget(self.combine_shapes, 2, 0, 1, 2)
+        self.layout_step.addWidget(self.scroll_combine, 3, 0)
+        self.layout_step.addWidget(self.display_combine_range, 3, 1)
 
         self.settingslayout.addWidget(self.widget_color, 2, 0)  # COLOR
         self.widget_color.setLayout(self.layout_color)
@@ -119,10 +135,8 @@ class Trackergui(QWidget):
         self.borderlayout.addWidget(self.buttonLoad, 4, 0, 1, 2)  # LOAD
         self.borderlayout.addWidget(self.quick_load, 5, 0, Qt.AlignRight)
         self.borderlayout.addWidget(self.box_isdynamic, 5, 1)
-        self.borderlayout.addWidget(self.combine_shapes, 6, 0)
-        self.borderlayout.addWidget(self.box_combine, 6, 1)
 
-        self.borderlayout.addWidget(self.graphic_box, 7, 0, 1, 2)
+        self.borderlayout.addWidget(self.graphic_box, 6, 0, 1, 2)
         self.graphic_box.setLayout(self.layout_graph)
         self.layout_graph.addWidget(self.points, 0, 0)
         self.layout_graph.addWidget(self.point_box, 0, 1, Qt.AlignLeft)
@@ -132,6 +146,9 @@ class Trackergui(QWidget):
         self.layout_graph.addWidget(self.center_box, 2, 1, Qt.AlignLeft)
 
         # Complete Settings
+        self.file_manage.setTitle("File")
+        self.action_new_file.setText("New File")
+
         self.settigns_box.setTitle("Settings")
 
         self.title_step.setText("Step")  # STEP
@@ -141,6 +158,12 @@ class Trackergui(QWidget):
         self.scroll_step.setValue(2)
         self.scroll_step.setPageStep(1)
         self.scroll_step.setCursor(Qt.PointingHandCursor)
+        self.display_combine_range.setText("Off")
+        self.scroll_combine.setOrientation(Qt.Horizontal)
+        self.scroll_combine.setRange(0, 50)
+        self.scroll_combine.setValue(0)
+        self.scroll_combine.setPageStep(1)
+        self.scroll_combine.setCursor(Qt.PointingHandCursor)
 
         self.title_color.setText("Color")  # COLOR
         self.dynamic_color_label.setFixedSize(80, 40)
@@ -176,17 +199,13 @@ class Trackergui(QWidget):
 
         self.apply_new_color(self.my_color)
 
-        # Build
-        self.containImage.setPixmap(QPixmap("banana.jpg"))
-        self.my_image = Image.open("banana.jpg")
-        self.map = self.my_image.load()
-        self.size = self.my_image.size
-        self.containImage.setFixedSize(self.size[0], self.size[1])
+        self.action_new_file.triggered.connect(self.select_new_file)
 
         self.box_isdynamic.stateChanged.connect(self.new_state)
         self.scroll_step.valueChanged.connect(self.step_changed)
         self.scroll_color.valueChanged.connect(self.new_range_color)
         self.buttonLoad.clicked.connect(self.calltracker)
+        self.scroll_combine.valueChanged.connect(self.combines_shapes_box)
 
         self.containImage.messager.pixel_selected.connect(self.apply_newpixel_selected)
         self.containImage.messager.transfert_position.connect(self.display_temporary_color)
@@ -195,12 +214,11 @@ class Trackergui(QWidget):
         self.point_box.stateChanged.connect(self.show_hide_points)
         self.square_box.stateChanged.connect(self.show_hide_rects)
         self.center_box.stateChanged.connect(self.show_hide_middle)
-        self.box_combine.stateChanged.connect(self.combines_shapes_box)
 
     @Slot()
     def calltracker(self):
         count = time.time()
-        self.shapes = start_tracker(self.map, self.size, self.step, self.min_color, self.max_color, self.did_compile_shapes)
+        self.shapes = start_tracker(self.map, self.size, self.step, self.min_color, self.max_color, self.compiler_value)
         self.display_calctime.setText(str(round(time.time() - count, 5)))
 
         count = time.time()
@@ -213,6 +231,24 @@ class Trackergui(QWidget):
     def step_changed(self, value):
         self.value_step.setText(str(value))
         self.step = value
+
+        if self.compiler_value == 0:
+            self.display_combine_range.setText("Off")
+        else:
+            self.display_combine_range.setText(str(self.step * self.compiler_value))
+
+        if self.are_dynamic_settings:
+            self.calltracker()
+
+    @Slot(int)
+    def combines_shapes_box(self, value):
+        self.compiler_value = value
+
+        if self.compiler_value == 0:
+            self.display_combine_range.setText("Off")
+        else:
+            self.display_combine_range.setText(str(self.step * self.compiler_value))
+
         if self.are_dynamic_settings:
             self.calltracker()
 
@@ -303,16 +339,6 @@ class Trackergui(QWidget):
             self.middle_visible = False
         self.build_graph()
 
-    @Slot(int)
-    def combines_shapes_box(self, value):
-        if value == 2:
-            self.did_compile_shapes = True
-        else:
-            self.did_compile_shapes = False
-
-        if self.are_dynamic_settings:
-            self.calltracker()
-
     def build_graph(self):
         self.scene.setSceneRect(0, 0, self.size[0], self.size[1])
         self.scene.clear()
@@ -325,7 +351,7 @@ class Trackergui(QWidget):
         color_middle.setWidth(2)
         middle_width = 10
 
-        self.scene.addPixmap(QPixmap("bananalow.jpg"))
+        self.scene.addPixmap(self.low_pixmap)
 
         for i in range(len(self.shapes)):
             if self.point_visibles:
@@ -339,3 +365,30 @@ class Trackergui(QWidget):
                 self.scene.addLine(self.shapes[i].center[0], self.shapes[i].center[1] - middle_width, self.shapes[i].center[0], self.shapes[i].center[1] + middle_width, color_middle)
 
         self.graphic_view.setScene(self.scene)
+
+    def load_image(self):
+        self.containImage.setPixmap(QPixmap(self.image_url))
+        self.my_image = Image.open(self.image_url)
+        self.map = self.my_image.load()
+        self.size = self.my_image.size
+
+        if self.size[0] > self.size[1]:
+            self.mainGridLayout.addWidget(self.graphic_view, 1, 0)
+            self.mainGridLayout.addWidget(self.settingswidget, 0, 1, 2, 1)
+        else:
+            self.mainGridLayout.addWidget(self.graphic_view, 0, 1)
+            self.mainGridLayout.addWidget(self.settingswidget, 0, 2, 2, 1)
+
+    def select_new_file(self):
+        container = QFileDialog.getOpenFileName(self, "Open Image", "", "Image Files (*.png *.jpg)")
+        self.image_url = container[0]
+
+        self.load_image()
+
+        self.low_pixmap = QPixmap(self.image_url)
+        painter = QPainter()
+
+        painter.drawPixmap(QRect(0, 0, self.size[0], self.size[1]), self.low_pixmap)
+        painter.translate(0, 200)
+        painter.drawPixmap(QRect(0, 0, self.size[0], self.size[1]), self.low_pixmap)
+        painter.fillRect(QRect(0, 0, self.size[0], self.size[1]), QBrush(QColor(0, 0, 0, 200)))

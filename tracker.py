@@ -11,9 +11,10 @@ shapes_list = []
 temporary_shapes = []
 splitted_shapes = {}
 compiles_shapes = False
+checked_range = 0
 
 
-def start_tracker(newpixel_map, size, newstep, mincolor, maxcolor, might_compiles_shapes):
+def start_tracker(newpixel_map, size, newstep, mincolor, maxcolor, new_compiler_value):
     global max_height
     global bottom_color
     global top_color
@@ -22,6 +23,7 @@ def start_tracker(newpixel_map, size, newstep, mincolor, maxcolor, might_compile
     global temporary_shapes
     global splitted_shapes
     global compiles_shapes
+    global checked_range
 
     max_width = size[0]
     max_height = size[1]
@@ -31,7 +33,13 @@ def start_tracker(newpixel_map, size, newstep, mincolor, maxcolor, might_compile
     top_color = maxcolor
     step = newstep
     pixel_map = newpixel_map
-    compiles_shapes = might_compiles_shapes
+
+    if new_compiler_value != 0:
+        checked_range = step * new_compiler_value
+        compiles_shapes = True
+    else:
+        checked_range = step
+        compiles_shapes = False
 
     list_of_rows = {}
     last_row = []
@@ -88,7 +96,7 @@ def compile_items(list_of_rows):
     push_and_close()
 
     if compiles_shapes:
-        shape_compiler()
+         shape_compiler()
 
     return shapes_list
 
@@ -107,8 +115,8 @@ def micro_compile(current_row, height_iterator):
     while i < len(temporary_shapes):  # Je regarde dans mes formes en cour de construction
         for z in range(len(temporary_shapes[i].entries)):
             for x in range(len(current_row)):  # Si certaines matches avec la nouvelle row
-                if temporary_shapes[i].entries[z][0][0] <= current_row[x][0] <= temporary_shapes[i].entries[z][1][0] or \
-                        temporary_shapes[i].entries[z][0][0] <= current_row[x][1] <= temporary_shapes[i].entries[z][1][0] or \
+                if temporary_shapes[i].entries[z][0][0] - checked_range <= current_row[x][0] <= temporary_shapes[i].entries[z][1][0] + checked_range or \
+                        temporary_shapes[i].entries[z][0][0] - checked_range <= current_row[x][1] <= temporary_shapes[i].entries[z][1][0] + checked_range or \
                         current_row[x][0] <= temporary_shapes[i].entries[z][0][0] <= current_row[x][1] or \
                         current_row[x][0] <= temporary_shapes[i].entries[z][1][0] <= current_row[x][1]:
                     if x in find_split_in:
@@ -151,8 +159,6 @@ def push_and_close():
 
 def shape_compiler():
     global shapes_list
-
-    checked_range = step * 10
 
     i = 0
     y = 0
