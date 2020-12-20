@@ -7,9 +7,9 @@ import time
 from Shape import *
 from LabelPicker import *
 
-class Trackergui(QMainWindow):
+class Image_gui(QWidget):
     def __init__(self):
-        QMainWindow.__init__(self)
+        QWidget.__init__(self)
         self.step = 0
         self.my_color = (0, 0, 0)
         self.map = 0
@@ -25,11 +25,7 @@ class Trackergui(QMainWindow):
         self.image_url = "banana.jpg"
         self.low_pixmap = QPixmap()
 
-        self.main_widget = QWidget(self)
         self.mainGridLayout = QGridLayout(self)
-        self.menu_bar = QMenuBar(self)
-        self.file_manage = QMenu(self)
-        self.action_new_file = QAction(self)
 
         self.containImage = LabelPicker(self)  # GRAPH
         self.graphic_view = QGraphicsView(self)
@@ -41,6 +37,8 @@ class Trackergui(QMainWindow):
 
         self.settingswidget = QWidget(self)
         self.borderlayout = QGridLayout(self)
+
+        self.button_new_file = QPushButton(self)
 
         self.settigns_box = QGroupBox(self)  # SETTINGS
         self.settingslayout = QGridLayout(self)
@@ -85,24 +83,23 @@ class Trackergui(QMainWindow):
         self.center = QLabel(self)
         self.center_box = QCheckBox(self)
 
+        self.ini_gui()
 
     def ini_gui(self):
 
         #  Build Main
-        self.setCentralWidget(self.main_widget)
-        self.main_widget.setLayout(self.mainGridLayout)
+        self.setLayout(self.mainGridLayout)
 
         #  IMAGES
         self.mainGridLayout.addWidget(self.containImage, 0, 0)
         self.load_image()
-        self.setMenuBar(self.menu_bar)
-        self.menu_bar.addMenu(self.file_manage)
-        self.file_manage.addAction(self.action_new_file)
 
         # Build Settings
         self.settingswidget.setLayout(self.borderlayout)
 
-        self.borderlayout.addWidget(self.settigns_box, 0, 0, 1, 2)  # BOX
+        self.borderlayout.addWidget(self.button_new_file, 0, 0, 1, 2)  # NEW FILE
+
+        self.borderlayout.addWidget(self.settigns_box, 1, 0, 1, 2)  # BOX
         self.settigns_box.setLayout(self.settingslayout)
 
         self.settingslayout.addWidget(self.widget_step, 1, 0)  # STEP
@@ -123,7 +120,7 @@ class Trackergui(QMainWindow):
         self.layout_color.addWidget(self.display_maxcolor, 1, 2, Qt.AlignLeft)
         self.layout_color.addWidget(self.scroll_color, 2, 0, 1, 3)
 
-        self.borderlayout.addWidget(self.box_build, 3, 0, 1, 2)  # BUILD
+        self.borderlayout.addWidget(self.box_build, 2, 0, 1, 2)  # BUILD
         self.box_build.setLayout(self.grid_build)
         self.grid_build.addWidget(self.calctime, 0, 0)
         self.grid_build.addWidget(self.display_calctime, 1, 0)
@@ -132,11 +129,11 @@ class Trackergui(QMainWindow):
         self.grid_build.addWidget(self.nbr_item, 4, 0)
         self.grid_build.addWidget(self.display_nbr_item, 5, 0)
 
-        self.borderlayout.addWidget(self.buttonLoad, 4, 0, 1, 2)  # LOAD
-        self.borderlayout.addWidget(self.quick_load, 5, 0, Qt.AlignRight)
-        self.borderlayout.addWidget(self.box_isdynamic, 5, 1)
+        self.borderlayout.addWidget(self.buttonLoad, 3, 0, 1, 2)  # LOAD
+        self.borderlayout.addWidget(self.quick_load, 4, 0, Qt.AlignRight)
+        self.borderlayout.addWidget(self.box_isdynamic, 4, 1)
 
-        self.borderlayout.addWidget(self.graphic_box, 6, 0, 1, 2)
+        self.borderlayout.addWidget(self.graphic_box, 5, 0, 1, 2)
         self.graphic_box.setLayout(self.layout_graph)
         self.layout_graph.addWidget(self.points, 0, 0)
         self.layout_graph.addWidget(self.point_box, 0, 1, Qt.AlignLeft)
@@ -146,8 +143,7 @@ class Trackergui(QMainWindow):
         self.layout_graph.addWidget(self.center_box, 2, 1, Qt.AlignLeft)
 
         # Complete Settings
-        self.file_manage.setTitle("File")
-        self.action_new_file.setText("New File")
+        self.button_new_file.setText("New File")
 
         self.settigns_box.setTitle("Settings")
 
@@ -199,7 +195,7 @@ class Trackergui(QMainWindow):
 
         self.apply_new_color(self.my_color)
 
-        self.action_new_file.triggered.connect(self.select_new_file)
+        self.button_new_file.clicked.connect(self.select_new_file)
 
         self.box_isdynamic.stateChanged.connect(self.new_state)
         self.scroll_step.valueChanged.connect(self.step_changed)
