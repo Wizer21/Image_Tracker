@@ -38,7 +38,7 @@ def start_tracker(newpixel_map, size, newstep, mincolor, maxcolor, new_compiler_
         checked_range = step * new_compiler_value
         compiles_shapes = True
     else:
-        checked_range = step
+        checked_range = 0
         compiles_shapes = False
 
     list_of_rows = {}
@@ -165,10 +165,10 @@ def shape_compiler():
     while i < len(shapes_list):
         while y < len(shapes_list):
             if y != i:
-                if shapes_list[i].top_left[0] - checked_range < shapes_list[y].top_left[0] < shapes_list[i].bot_right[0] + checked_range or \
-                shapes_list[i].top_left[0] - checked_range < shapes_list[y].bot_right[0] < shapes_list[i].bot_right[0] + checked_range and \
-                shapes_list[i].top_left[1] - checked_range < shapes_list[y].top_left[1] < shapes_list[i].bot_right[1] + checked_range or \
-                shapes_list[i].top_left[1] - checked_range < shapes_list[y].bot_right[1] < shapes_list[i].bot_right[1] + checked_range:
+                if shapes_list[i].top_left[0] - checked_range <= shapes_list[y].top_left[0] <= shapes_list[i].bot_right[0] + checked_range or \
+                shapes_list[i].top_left[0] - checked_range <= shapes_list[y].bot_right[0] <= shapes_list[i].bot_right[0] + checked_range and \
+                shapes_list[i].top_left[1] - checked_range <= shapes_list[y].top_left[1] <= shapes_list[i].bot_right[1] + checked_range or \
+                shapes_list[i].top_left[1] - checked_range <= shapes_list[y].bot_right[1] <= shapes_list[i].bot_right[1] + checked_range:
                     shapes_list[i].import_points(shapes_list[y].point_cloud)
                     del shapes_list[y]
                     if i != 0:

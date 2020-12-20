@@ -387,6 +387,10 @@ class Trackergui(QMainWindow):
         self.map = self.my_image.load()
         self.size = self.my_image.size
 
+        self.setFixedSize(0, 0)  #Bug ?
+        self.containImage.setFixedSize(self.size[0], self.size[1])
+        self.graphic_view.setFixedSize(self.size[0], self.size[1])
+
         if self.size[0] > self.size[1]:
             self.mainGridLayout.addWidget(self.graphic_view, 1, 0)
             self.mainGridLayout.addWidget(self.settingswidget, 0, 1, 2, 1)

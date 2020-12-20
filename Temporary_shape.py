@@ -15,7 +15,10 @@ class Temporary_shape:
             self.point_list.append(self.entries[i][0])
             self.point_list.append(self.entries[i][1])
 
-        self.entries = [self.new_entries.pop()]
+        self.entries.clear()
+        for i in range(len(self.new_entries)):
+            self.entries.append(self.new_entries[i])
+        self.new_entries.clear()
         test = 0
 
     def import_entries(self, list):
