@@ -7,9 +7,10 @@ import time
 from Shape import *
 from LabelPicker import *
 
+
 class Image_gui(QWidget):
-    def __init__(self):
-        QWidget.__init__(self)
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent=parent)
         self.step = 0
         self.my_color = (0, 0, 0)
         self.map = 0
@@ -86,9 +87,12 @@ class Image_gui(QWidget):
         self.ini_gui()
 
     def ini_gui(self):
-
         #  Build Main
         self.setLayout(self.mainGridLayout)
+        self.load_image()
+
+        self.mainGridLayout.addWidget(self.graphic_view, 1, 0)
+        self.mainGridLayout.addWidget(self.settingswidget, 0, 1, 2, 1)
 
         #  IMAGES
         self.mainGridLayout.addWidget(self.containImage, 0, 0)
@@ -210,8 +214,6 @@ class Image_gui(QWidget):
         self.point_box.stateChanged.connect(self.show_hide_points)
         self.square_box.stateChanged.connect(self.show_hide_rects)
         self.center_box.stateChanged.connect(self.show_hide_middle)
-
-        self.load_image()
 
     @Slot()
     def calltracker(self):
@@ -383,7 +385,6 @@ class Image_gui(QWidget):
         self.map = self.my_image.load()
         self.size = self.my_image.size
 
-        self.setFixedSize(0, 0)  #Bug ?
         self.containImage.setFixedSize(self.size[0], self.size[1])
         self.graphic_view.setFixedSize(self.size[0], self.size[1])
 
