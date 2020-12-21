@@ -9,10 +9,10 @@ class Communication(QObject):
     selecter_leaved = Signal()
 
 
-class LabelPicker(QLabel):
+class ViewPicker(QGraphicsView):
     def __init__(self, parent=None):
-        QLabel.__init__(self, parent=parent)
-        self.setCursor(Qt.PointingHandCursor)
+        QGraphicsView .__init__(self, parent=parent)
+        self.setCursor(Qt.CrossCursor)
         self.setMouseTracking(True)
         self.setContentsMargins(0, 0, 0, 0)
         self.setStyleSheet("padding: 0px; ")

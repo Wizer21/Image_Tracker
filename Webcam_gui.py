@@ -5,15 +5,24 @@ from numpy import *
 from PIL import Image
 import cv2
 import sys
-
+from ViewPicker import *
+from Cam_tracker import *
 
 class Thread(QThread):
     changePixmap = Signal(QImage)
+    video_size = Signal(int, int)
 
     def run(self):
         cap = cv2.VideoCapture(0)
         fps = cap.get(cv2.CAP_PROP_FPS)  # Print fps
+
+        width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+        height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+
+        self.video_size.emit(width, height)
+        print("SIZE: " + str(width) + ", " + str(height))
         print("FPS: " + str(fps))
+
         while True:
             ret, frame = cap.read()
             if ret:
@@ -21,16 +30,25 @@ class Thread(QThread):
                 h, w, ch = rgbImage.shape
                 bytesPerLine = ch * w
                 convertToQtFormat = QImage(rgbImage.data, w, h, bytesPerLine, QImage.Format_RGB888)
-                image_qt = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
+                image_qt = convertToQtFormat.scaled(width, height, Qt.KeepAspectRatio)
                 self.changePixmap.emit(image_qt)
 
 class Webcam_gui(QWidget):
     def __init__(self):
         QWidget.__init__(self)
+        self.my_thread = 0
         self.player_color = 0
+        self.hover_rgb = 0
+        self.min_rgb = (0, 0, 0)
+        self.mid_rgb = (0, 0, 0)
+        self.max_rgb = (0, 0, 0)
+        self.color_range = 40
+        self.run_tracking = False
+        self.cam_current_image = QImage()
 
         self.main_label = QGridLayout(self)
-        self.camera_label = QLabel(self)
+        self.graphic_scene = QGraphicsScene(self)
+        self.graphic_view_picker = ViewPicker()
 
         self.color_box = QGroupBox(self)
         self.color_layout = QGridLayout(self)
@@ -40,12 +58,12 @@ class Webcam_gui(QWidget):
         self.mid_color = QLabel(self)
         self.top_color = QLabel(self)
 
-        self.build_ui()
         self.set_up_camera()
+        self.build_ui()
 
     def build_ui(self):
         self.setLayout(self.main_label)
-        self.main_label.addWidget(self.camera_label, 0, 0)
+        self.main_label.addWidget(self.graphic_view_picker, 0, 0)
         self.main_label.addWidget(self.color_box, 0, 1)
         self.color_box.setLayout(self.color_layout)
 
@@ -55,25 +73,91 @@ class Webcam_gui(QWidget):
         self.color_layout.addWidget(self.mid_color, 1, 1)
         self.color_layout.addWidget(self.top_color, 1, 2)
 
-        self.hover_color.setText("hovcolor")  # TEMPORAIRE TEST
-        self.min_color.setText("min")
-        self.mid_color.setText("mid")
-        self.top_color.setText("top")
+        self.hover_color.setFixedSize(80, 40)
+        self.min_color.setFixedSize(80, 40)
+        self.mid_color.setFixedSize(80, 40)
+        self.top_color.setFixedSize(80, 40)
 
+        self.main_label.setAlignment(Qt.AlignTop)
         self.color_layout.setAlignment(Qt.AlignTop)
         self.color_box.setTitle("Color")
         self.text_color.setText("Hovered")
 
+        self.graphic_view_picker.messager.transfert_position.connect(self.hover_position)
+        self.graphic_view_picker.messager.pixel_selected.connect(self.new_color_clicked)
+        self.graphic_view_picker.messager.pixel_selected.connect(self.new_color_clicked)
+
+
     def set_up_camera(self):
-        th = Thread(self)
-        th.changePixmap.connect(self.setImage)
-        th.start()
+        self.my_thread = Thread(self)
+        self.my_thread.changePixmap.connect(self.setImage)
+        self.my_thread.video_size.connect(self.apply_camera_size)
+        self.my_thread.start()
 
     @Slot(QImage)
     def setImage(self, image):
-        self.camera_label.setPixmap(QPixmap.fromImage(image))
+        self.graphic_scene.clear()
+        self.graphic_scene.addPixmap(QPixmap.fromImage(image))
+        self.graphic_view_picker.setScene(self.graphic_scene)
 
+        self.cam_current_image = image
         color = QColor(image.pixel(0, 0))
         test = color.red()
         test1 = color.blue()
         test2 = color.green()
+
+        if self.run_tracking:
+            cam_tracker(self.cam_current_image)
+
+    @Slot(int, int)
+    def hover_position(self, x, y):
+        color = QColor(self.cam_current_image.pixel(x, y))
+        self.hover_rgb = (color.red(), color.green(), color.blue())
+
+        pix_color = QPixmap(100, 100)
+        pix_color.fill(QColor(self.hover_rgb[0], self.hover_rgb[1], self.hover_rgb[2]))
+        self.hover_color.setPixmap(pix_color)
+
+    @Slot(int, int)
+    def new_color_clicked(self, x, y):
+        color = QColor(self.cam_current_image.pixel(x, y))
+        self.apply_new_color((color.red(), color.green(), color.blue()))
+
+        new_pos(x, y, self.min_rgb, self.max_rgb)
+        self.run_tracking = True
+
+    def apply_new_color(self, newcolor):
+        pix_color = QPixmap(100, 100)
+        pix_color.fill(QColor(newcolor[0], newcolor[1], newcolor[2]))
+
+        self.mid_rgb = newcolor
+        self.mid_color.setPixmap(pix_color)
+
+        # Set Min Color
+        rgb_color = [self.mid_rgb[0], self.mid_rgb[1], self.mid_rgb[2]]
+        for i in range(len(rgb_color)):
+            rgb_color[i] -= self.color_range
+            if rgb_color[i] < 0:
+                rgb_color[i] = 0
+
+        self.min_rgb = (rgb_color[0], rgb_color[1], rgb_color[2])
+        pix_color.fill(QColor(self.min_rgb[0], self.min_rgb[1], self.min_rgb[2]))
+        self.min_color.setPixmap(pix_color)
+
+        # Set Max Color
+        rgb_color = [self.mid_rgb[0], self.mid_rgb[1], self.mid_rgb[2]]
+        for i in range(len(rgb_color)):
+            rgb_color[i] += self.color_range
+            if 255 < rgb_color[i]:
+                rgb_color[i] = 255
+
+        self.max_rgb = (rgb_color[0], rgb_color[1], rgb_color[2])
+        pix_color.fill(QColor(self.max_rgb[0], self.max_rgb[1], self.max_rgb[2]))
+        self.top_color.setPixmap(pix_color)
+
+    @Slot(int, int)
+    def apply_camera_size(self, width, height):
+        self.graphic_view_picker.setFixedSize(width, height)
+
+    def __del__(self):
+        del self.my_thread
