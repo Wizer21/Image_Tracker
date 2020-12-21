@@ -7,6 +7,7 @@ import cv2
 import sys
 from ViewPicker import *
 from Cam_tracker import *
+from Dynamic_shape import *
 
 class Thread(QThread):
     changePixmap = Signal(QImage)
@@ -18,6 +19,8 @@ class Thread(QThread):
 
         width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
         height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        cap.set(10, 4)  # SET BRIGHNESS TO 5
+        cap.set(12, 20)  # SET SATURATION TO 10
 
         self.video_size.emit(width, height)
         print("SIZE: " + str(width) + ", " + str(height))
@@ -42,8 +45,9 @@ class Webcam_gui(QWidget):
         self.min_rgb = (0, 0, 0)
         self.mid_rgb = (0, 0, 0)
         self.max_rgb = (0, 0, 0)
-        self.color_range = 40
+        self.color_range = 30
         self.run_tracking = False
+        self.shape = Dynamic_shape()
         self.cam_current_image = QImage()
 
         self.main_label = QGridLayout(self)
@@ -57,6 +61,8 @@ class Webcam_gui(QWidget):
         self.min_color = QLabel(self)
         self.mid_color = QLabel(self)
         self.top_color = QLabel(self)
+        self.color_slider = QSlider(self)
+        self.color_value_label = QLabel(self)
 
         self.set_up_camera()
         self.build_ui()
@@ -72,17 +78,28 @@ class Webcam_gui(QWidget):
         self.color_layout.addWidget(self.min_color, 1, 0)
         self.color_layout.addWidget(self.mid_color, 1, 1)
         self.color_layout.addWidget(self.top_color, 1, 2)
+        self.color_layout.addWidget(self.color_slider, 2, 0, 1, 2)
+        self.color_layout.addWidget(self.color_value_label, 2, 2)
 
         self.hover_color.setFixedSize(80, 40)
         self.min_color.setFixedSize(80, 40)
         self.mid_color.setFixedSize(80, 40)
         self.top_color.setFixedSize(80, 40)
 
+        self.graphic_view_picker.setScene(self.graphic_scene)
         self.main_label.setAlignment(Qt.AlignTop)
         self.color_layout.setAlignment(Qt.AlignTop)
         self.color_box.setTitle("Color")
         self.text_color.setText("Hovered")
+        self.color_value_label.setText(str(self.color_range))
 
+        self.color_slider.setOrientation(Qt.Horizontal)
+        self.color_slider.setRange(0, 50)
+        self.color_slider.setValue(30)
+        self.color_slider.setPageStep(1)
+        self.color_slider.setCursor(Qt.PointingHandCursor)
+
+        self.color_slider.valueChanged.connect(self.apply_color_range)
         self.graphic_view_picker.messager.transfert_position.connect(self.hover_position)
         self.graphic_view_picker.messager.pixel_selected.connect(self.new_color_clicked)
         self.graphic_view_picker.messager.pixel_selected.connect(self.new_color_clicked)
@@ -97,17 +114,16 @@ class Webcam_gui(QWidget):
     @Slot(QImage)
     def setImage(self, image):
         self.graphic_scene.clear()
-        self.graphic_scene.addPixmap(QPixmap.fromImage(image))
-        self.graphic_view_picker.setScene(self.graphic_scene)
 
+        self.graphic_scene.addPixmap(QPixmap.fromImage(image))
         self.cam_current_image = image
-        color = QColor(image.pixel(0, 0))
-        test = color.red()
-        test1 = color.blue()
-        test2 = color.green()
 
         if self.run_tracking:
-            cam_tracker(self.cam_current_image)
+            data_shape = cam_tracker(self.cam_current_image)
+            self.shape.build(data_shape[0], data_shape[1], data_shape[2], data_shape[3])
+            self.draw_shape()
+            self.apply_new_color(data_shape[4])
+
 
     @Slot(int, int)
     def hover_position(self, x, y):
@@ -123,7 +139,7 @@ class Webcam_gui(QWidget):
         color = QColor(self.cam_current_image.pixel(x, y))
         self.apply_new_color((color.red(), color.green(), color.blue()))
 
-        new_pos(x, y, self.min_rgb, self.max_rgb)
+        new_pos(x, y, self.mid_rgb, self.color_range)
         self.run_tracking = True
 
     def apply_new_color(self, newcolor):
@@ -155,9 +171,28 @@ class Webcam_gui(QWidget):
         pix_color.fill(QColor(self.max_rgb[0], self.max_rgb[1], self.max_rgb[2]))
         self.top_color.setPixmap(pix_color)
 
+    def draw_shape(self):
+        color_square = QPen("#ff0048")
+        color_square.setWidth(2)
+        color_middle = QPen("#0084ff")
+        color_middle.setWidth(2)
+        middle_width = 10
+
+        self.graphic_scene.addRect(QRect(self.shape.top_left[0], self.shape.top_left[1], self.shape.width, self.shape.height), color_square)
+
+        self.graphic_scene.addLine(self.shape.center[0] - middle_width, self.shape.center[1], self.shape.center[0] + middle_width, self.shape.center[1], color_middle)
+        self.graphic_scene.addLine(self.shape.center[0], self.shape.center[1] - middle_width, self.shape.center[0], self.shape.center[1] + middle_width, color_middle)
+
+
     @Slot(int, int)
     def apply_camera_size(self, width, height):
         self.graphic_view_picker.setFixedSize(width, height)
 
     def __del__(self):
-        del self.my_thread
+        del self.my_threa
+
+    @Slot(int)
+    def apply_color_range(self, value):
+        self.color_range = value
+        self.color_value_label.setText(str(value))
+        new_color_range(value)
