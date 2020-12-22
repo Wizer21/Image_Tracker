@@ -13,17 +13,20 @@ class Thread(QThread):
     changePixmap = Signal(QImage)
     video_size = Signal(int, int)
 
+
     def run(self):
+        my_widht = 1920
+        my_height = 1080
         cap = cv2.VideoCapture(0)
         fps = cap.get(cv2.CAP_PROP_FPS)  # Print fps
 
-        width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-        height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        # width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  #Permit to get native size
+        # height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
         cap.set(10, 4)  # SET BRIGHNESS TO 5
         cap.set(12, 20)  # SET SATURATION TO 10
 
-        self.video_size.emit(width, height)
-        print("SIZE: " + str(width) + ", " + str(height))
+        self.video_size.emit(my_widht, my_height)
+        print("SIZE: " + str(my_widht) + ", " + str(my_height))
         print("FPS: " + str(fps))
 
         while True:
@@ -33,7 +36,7 @@ class Thread(QThread):
                 h, w, ch = rgbImage.shape
                 bytesPerLine = ch * w
                 convertToQtFormat = QImage(rgbImage.data, w, h, bytesPerLine, QImage.Format_RGB888)
-                image_qt = convertToQtFormat.scaled(width, height, Qt.KeepAspectRatio)
+                image_qt = convertToQtFormat.scaled(my_widht, my_height, Qt.KeepAspectRatio)
                 self.changePixmap.emit(image_qt)
 
 class Webcam_gui(QWidget):
@@ -50,7 +53,7 @@ class Webcam_gui(QWidget):
         self.shape = Dynamic_shape()
         self.cam_current_image = QImage()
 
-        self.main_label = QGridLayout(self)
+        self.main_layout = QGridLayout(self)
         self.graphic_scene = QGraphicsScene(self)
         self.graphic_view_picker = ViewPicker()
 
@@ -68,9 +71,9 @@ class Webcam_gui(QWidget):
         self.build_ui()
 
     def build_ui(self):
-        self.setLayout(self.main_label)
-        self.main_label.addWidget(self.graphic_view_picker, 0, 0)
-        self.main_label.addWidget(self.color_box, 0, 1)
+        self.setLayout(self.main_layout)
+        self.main_layout.addWidget(self.graphic_view_picker, 0, 0)
+        self.main_layout.addWidget(self.color_box, 0, 1)
         self.color_box.setLayout(self.color_layout)
 
         self.color_layout.addWidget(self.text_color, 0, 0, 1, 2)
@@ -87,7 +90,7 @@ class Webcam_gui(QWidget):
         self.top_color.setFixedSize(80, 40)
 
         self.graphic_view_picker.setScene(self.graphic_scene)
-        self.main_label.setAlignment(Qt.AlignTop)
+        self.main_layout.setAlignment(Qt.AlignTop and Qt.AlignRight)
         self.color_layout.setAlignment(Qt.AlignTop)
         self.color_box.setTitle("Color")
         self.text_color.setText("Hovered")

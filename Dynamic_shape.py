@@ -7,9 +7,9 @@ class Dynamic_shape:
         self.width = 0
         self.height = 0
 
-    def build(self, top, right, bot, left):
-        self.top_left = [left, top]
-        self.bot_right = [right, bot]
-        self.width = right-left
-        self.height = bot-top
-        self.center = [left + (self.width/2), top + (self.height/2)]
+    def build(self, new_top_left, new_bot_right, new_width, new_height):
+        self.top_left = new_top_left
+        self.bot_right = new_bot_right
+        self.width = new_width
+        self.height = new_height
+        self.center = [new_top_left[0] + (self.width/2), new_top_left[1] + (self.height/2)]

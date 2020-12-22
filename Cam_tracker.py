@@ -7,12 +7,13 @@ last_y = 0
 min_rgb = (0, 0, 0)
 max_rgb = (0, 0, 0)
 
-
+min_dimeter = 0
 step = 2
 adaptive_color = (0, 0, 0)
 initial_color = (0, 0, 0)
 color_iterator = 0
 color_range = 0
+
 
 def new_pos(x, y, mid_rgb, new_color_range):
     global last_x
@@ -21,11 +22,12 @@ def new_pos(x, y, mid_rgb, new_color_range):
     global color_range
     global adaptive_color
     global initial_color
-
+    global min_dimeter
     last_x = x
     last_y = y
     color_range = new_color_range
     initial_color = mid_rgb
+    min_dimeter = step
 
     cal_colors(mid_rgb)
 
@@ -36,78 +38,92 @@ def new_pos(x, y, mid_rgb, new_color_range):
 
     color_iterator = 0
 
+
 def cam_tracker(q_image):
     global last_x
     global last_y
     global adaptive_color
     global color_iterator
+    global min_dimeter
 
     cal_colors(adaptive_color)  # Calc min and max color from adaptive_color
+    define_starter(q_image)
 
-    color = QColor(q_image.pixel(last_x, last_y))
-    if not is_pixel_matching((color.red(), color.green(), color.blue())):
-        # PARCOURIR LA MAP POUR TROUVER UNE FORME AVEC LA DERNIERE COULEUR
-        cal_colors(initial_color)  # Try if center is matching initial color
-        if not is_pixel_matching((color.red(), color.green(), color.blue())):
-            return 0, 0, 0, 0, adaptive_color
+    # Define start positions
+    top = [last_x, last_y]
+    top_right = [last_x, last_y]
+    right = [last_x, last_y]
+    bot_right = [last_x, last_y]
+    bot = [last_x, last_y]
+    bot_left = [last_x, last_y]
+    left = [last_x, last_y]
+    top_left = [last_x, last_y]
+
+    positions = [top, top_right, right, bot_right, bot, bot_left, left, top_left]
+    variations = [[0, -step],
+                 [+step, -step],
+                 [+step, 0],
+                 [+step, +step],
+                 [0, +step],
+                 [-step, +step],
+                 [-step, 0],
+                 [-step, -step]]
 
     track = True
-
-    left = last_x
-    while track:  # CHECK IF IN RANGE
-        color = QColor(q_image.pixel(left, last_y))
-        if not is_pixel_matching((color.red(), color.green(), color.blue())):
-            color = QColor(q_image.pixel(left - step*2, last_y))
-            if not is_pixel_matching((color.red(), color.green(), color.blue())):
-                break
+    for i in range(len(positions)):
+        while track:
+            color = QColor(q_image.pixel(positions[i][0], positions[i][1]))
+            if is_pixel_matching((color.red(), color.green(), color.blue())):
+                positions[i][0] += variations[i][0]
+                positions[i][1] += variations[i][1]
             else:
-                left -= step*2
-        left -= step
-    left += step
+                color = QColor(q_image.pixel(positions[i][0] + int((variations[i][0] * 2)), positions[i][1] + int((variations[i][1] * 2))))
+                if is_pixel_matching((color.red(), color.green(), color.blue())):
+                    positions[i][0] += (variations[i][0] * 2)
+                    positions[i][1] += (variations[i][1] * 2)
+                else:
+                    color = QColor(q_image.pixel(positions[i][0] + int((variations[i][0] * 3)), positions[i][1] + int((variations[i][1] * 3))))
+                    if is_pixel_matching((color.red(), color.green(), color.blue())):
+                        positions[i][0] += (variations[i][0] * 3)
+                        positions[i][1] += (variations[i][1] * 3)
+                    else:
+                        break
+        positions[i][0] -= variations[i][0]
+        positions[i][1] -= variations[i][1]
 
-    right = last_x
-    while track:  # CHECK IF IN RANGE
-        color = QColor(q_image.pixel(right, last_y))
-        if not is_pixel_matching((color.red(), color.green(), color.blue())):
-            color = QColor(q_image.pixel(right + step*2, last_y))
-            if not is_pixel_matching((color.red(), color.green(), color.blue())):
-                break
-            else:
-                right += step*2
-        right += step
-    right -= step
+    last_x = left[0] + int(((right[0] - left[0])/2))
+    last_y = top[1] + int(((bot[1] - top[1])/2))
 
-    top = last_y
-    while track:  # CHECK IF IN RANGE
-        color = QColor(q_image.pixel(last_x, top))
-        if not is_pixel_matching((color.red(), color.green(), color.blue())):
-            color = QColor(q_image.pixel(last_x, top - step*2))
-            if not is_pixel_matching((color.red(), color.green(), color.blue())):
-                break
-            else:
-                top -= step*2
-        top -= step
-    top += step
-
-    bot = last_y
-    while track:  # CHECK IF IN RANGE
-        color = QColor(q_image.pixel(last_x, bot))
-        if not is_pixel_matching((color.red(), color.green(), color.blue())):
-            color = QColor(q_image.pixel(last_x, bot + step*2))
-            if not is_pixel_matching((color.red(), color.green(), color.blue())):
-                break
-            else:
-                bot += step*2
-        bot += step
-    bot -= step
-
-    last_x = int(left + ((right - left)/2))
-    last_y = int(top + ((bot - top)/2))
-
-    adaptive_color = (int(adaptive_color[0] / color_iterator), int(adaptive_color[1] / color_iterator), int(adaptive_color[2] / color_iterator))
+    if color_iterator != 0:
+        adaptive_color = (int(adaptive_color[0] / color_iterator), int(adaptive_color[1] / color_iterator), int(adaptive_color[2] / color_iterator))
     color_iterator = 0
 
-    return top, right, bot, left, adaptive_color
+    new_top_left = top_left
+    if left[0] < top_left[0]:
+        top_left[0] = left[0]
+    if top[1] < top_left[1]:
+        top_left[1] = top[1]
+
+    new_bot_right = bot_right
+    if right[0] > bot_right[0]:
+        bot_right[0] = right[0]
+    if bot[1] > bot_right[1]:
+        bot_right[1] = bot[1]
+
+    if right[0] - left[0] > 10:
+        min_dimeter = right[0] - left[0]
+    if min_dimeter > bot[1] - top[1] > 10:
+        min_dimeter = bot[1] - top[1]
+    if min_dimeter > bot_right[0] - top_left[0] > 10:
+        min_dimeter = bot_right[0] - top_left[0]
+    if min_dimeter > bot_right[1] - top_left[1] > 10:
+        min_dimeter = bot_right[1] - top_left[1]
+
+    print("dia" + str(min_dimeter))
+    new_width = new_bot_right[0] - new_top_left[0]
+    new_height = new_bot_right[1] - new_top_left[1]
+
+    return new_top_left, new_bot_right, new_width, new_height, adaptive_color
 
 
 def is_pixel_matching(pixel):
@@ -122,6 +138,7 @@ def is_pixel_matching(pixel):
         return True
 
     return False
+
 
 def cal_colors(mid_rgb):
     global min_rgb
@@ -143,6 +160,36 @@ def cal_colors(mid_rgb):
             rgb[i] = 255
     max_rgb = (rgb[0], rgb[1], rgb[2])
 
+
 def new_color_range(new_value):
     global color_range
     color_range = new_value
+
+
+def define_starter(q_image):
+    global last_x
+    global last_y
+    global min_dimeter
+
+    my_range = min_dimeter
+
+    for y in range(3):
+        position_list = [[0, 0],
+                         [0, -my_range],
+                         [+my_range, -my_range],
+                         [+my_range, 0],
+                         [+my_range, +my_range],
+                         [0, +my_range],
+                         [-my_range, +my_range],
+                         [-my_range, 0],
+                         [-my_range, -my_range]]
+
+        for i in range(len(position_list)):
+            color = QColor(q_image.pixel(last_x + position_list[i][0] , last_y + position_list[i][1]))
+            if is_pixel_matching((color.red(), color.green(), color.blue())):
+                last_x += position_list[i][0]
+                last_y += position_list[i][1]
+                return
+
+        my_range += min_dimeter
+    print("lost")
