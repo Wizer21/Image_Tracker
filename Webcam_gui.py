@@ -52,6 +52,7 @@ class Webcam_gui(QWidget):
         self.run_tracking = False
         self.shape = Dynamic_shape()
         self.cam_current_image = QImage()
+        self.timer_count = 0
 
         self.main_layout = QGridLayout(self)
         self.graphic_scene = QGraphicsScene(self)
@@ -66,6 +67,9 @@ class Webcam_gui(QWidget):
         self.top_color = QLabel(self)
         self.color_slider = QSlider(self)
         self.color_value_label = QLabel(self)
+
+        self.text_possible_iterations = QLabel(self)
+        self.iterations_sec = QLabel(self)
 
         self.set_up_camera()
         self.build_ui()
@@ -83,6 +87,9 @@ class Webcam_gui(QWidget):
         self.color_layout.addWidget(self.top_color, 1, 2)
         self.color_layout.addWidget(self.color_slider, 2, 0, 1, 2)
         self.color_layout.addWidget(self.color_value_label, 2, 2)
+
+        self.main_layout.addWidget(self.text_possible_iterations, 1, 1)
+        self.main_layout.addWidget(self.iterations_sec, 2, 1)
 
         self.hover_color.setFixedSize(80, 40)
         self.min_color.setFixedSize(80, 40)
@@ -102,6 +109,9 @@ class Webcam_gui(QWidget):
         self.color_slider.setPageStep(1)
         self.color_slider.setCursor(Qt.PointingHandCursor)
 
+        self.text_possible_iterations.setText("Possible iterations")
+        self.iterations_sec.setText("0")
+
         self.color_slider.valueChanged.connect(self.apply_color_range)
         self.graphic_view_picker.messager.transfert_position.connect(self.hover_position)
         self.graphic_view_picker.messager.pixel_selected.connect(self.new_color_clicked)
@@ -117,6 +127,7 @@ class Webcam_gui(QWidget):
     @Slot(QImage)
     def setImage(self, image):
         self.graphic_scene.clear()
+        count = time.time()
 
         self.graphic_scene.addPixmap(QPixmap.fromImage(image))
         self.cam_current_image = image
@@ -126,6 +137,11 @@ class Webcam_gui(QWidget):
             self.shape.build(data_shape[0], data_shape[1], data_shape[2], data_shape[3])
             self.draw_shape()
             self.apply_new_color(data_shape[4])
+
+        self.timer_count += 1
+        if self.timer_count > 5:
+            self.iterations_sec.setText(str(1/(time.time() - count)))
+            self.timer_count = 0
 
 
     @Slot(int, int)

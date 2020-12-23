@@ -184,7 +184,7 @@ class Image_gui(QWidget):
 
         self.buttonLoad.setText("Load")  # LOAD
         self.buttonLoad.setCursor(Qt.PointingHandCursor)
-        self.quick_load.setText("Quick load ")
+        self.quick_load.setText("Dynamic load")
         self.combine_shapes.setText("Combine shapes")
 
         self.borderlayout.setAlignment(Qt.AlignTop)

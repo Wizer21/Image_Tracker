@@ -1,19 +1,23 @@
 from PySide2.QtWidgets import *
 from PySide2.QtCore import *
 from PySide2.QtGui import *
+import time
 
 last_x = 0
 last_y = 0
 min_rgb = (0, 0, 0)
 max_rgb = (0, 0, 0)
 
-min_dimeter = 0
-step = 2
+min_diameter = 0
+step = 4
 adaptive_color = (0, 0, 0)
 initial_color = (0, 0, 0)
 color_iterator = 0
 color_range = 0
+variations = []
 
+min_color_limit = (0, 0, 0)
+max_color_limite = (0, 0, 0)
 
 def new_pos(x, y, mid_rgb, new_color_range):
     global last_x
@@ -22,21 +26,32 @@ def new_pos(x, y, mid_rgb, new_color_range):
     global color_range
     global adaptive_color
     global initial_color
-    global min_dimeter
+    global min_diameter
+    global variations
+    global min_color_limit
+    global max_color_limite
+
     last_x = x
     last_y = y
     color_range = new_color_range
     initial_color = mid_rgb
-    min_dimeter = step
+    min_diameter = step
 
+    adaptive_color = mid_rgb
+    color_iterator = 0
     cal_colors(mid_rgb)
 
-    red = int(min_rgb[0] + (max_rgb[0] - min_rgb[0]) / 2)
-    green = int(min_rgb[1] + (max_rgb[1] - min_rgb[1]) / 2)
-    blue = int(min_rgb[2] + (max_rgb[2] - min_rgb[2]) / 2)
-    adaptive_color = (red, green, blue)
+    min_color_limit = min_rgb
+    max_color_limite = max_rgb
 
-    color_iterator = 0
+    variations = [[0, -step],
+                 [+step, -step],
+                 [+step, 0],
+                 [+step, +step],
+                 [0, +step],
+                 [-step, +step],
+                 [-step, 0],
+                 [-step, -step]]
 
 
 def cam_tracker(q_image):
@@ -44,7 +59,7 @@ def cam_tracker(q_image):
     global last_y
     global adaptive_color
     global color_iterator
-    global min_dimeter
+    global min_diameter
 
     cal_colors(adaptive_color)  # Calc min and max color from adaptive_color
     define_starter(q_image)
@@ -60,14 +75,6 @@ def cam_tracker(q_image):
     top_left = [last_x, last_y]
 
     positions = [top, top_right, right, bot_right, bot, bot_left, left, top_left]
-    variations = [[0, -step],
-                 [+step, -step],
-                 [+step, 0],
-                 [+step, +step],
-                 [0, +step],
-                 [-step, +step],
-                 [-step, 0],
-                 [-step, -step]]
 
     track = True
     for i in range(len(positions)):
@@ -77,17 +84,19 @@ def cam_tracker(q_image):
                 positions[i][0] += variations[i][0]
                 positions[i][1] += variations[i][1]
             else:
-                color = QColor(q_image.pixel(positions[i][0] + int((variations[i][0] * 2)), positions[i][1] + int((variations[i][1] * 2))))
-                if is_pixel_matching((color.red(), color.green(), color.blue())):
-                    positions[i][0] += (variations[i][0] * 2)
-                    positions[i][1] += (variations[i][1] * 2)
-                else:
-                    color = QColor(q_image.pixel(positions[i][0] + int((variations[i][0] * 3)), positions[i][1] + int((variations[i][1] * 3))))
+                y = 0
+                matched = False
+                while y < 10:
+                    color = QColor(q_image.pixel(positions[i][0] + (variations[i][0] * y), positions[i][1] + (variations[i][1] * y)))
                     if is_pixel_matching((color.red(), color.green(), color.blue())):
-                        positions[i][0] += (variations[i][0] * 3)
-                        positions[i][1] += (variations[i][1] * 3)
-                    else:
-                        break
+                        positions[i][0] += (variations[i][0] * y)
+                        positions[i][1] += (variations[i][1] * y)
+                        y = 10
+                        matched = True
+                    y += 1
+                if not matched:
+                    break
+
         positions[i][0] -= variations[i][0]
         positions[i][1] -= variations[i][1]
 
@@ -96,7 +105,11 @@ def cam_tracker(q_image):
 
     if color_iterator != 0:
         adaptive_color = (int(adaptive_color[0] / color_iterator), int(adaptive_color[1] / color_iterator), int(adaptive_color[2] / color_iterator))
-    color_iterator = 0
+        if adaptive_color[0] < min_color_limit[0] or adaptive_color[1] < min_color_limit[1] or adaptive_color[2] < min_color_limit[2]:
+            adaptive_color = min_color_limit
+        elif adaptive_color[0] > max_color_limite[0] or adaptive_color[1] > max_color_limite[1] or adaptive_color[2] > max_color_limite[2]:
+            adaptive_color = max_color_limite
+        color_iterator = 0
 
     new_top_left = top_left
     if left[0] < top_left[0]:
@@ -111,15 +124,15 @@ def cam_tracker(q_image):
         bot_right[1] = bot[1]
 
     if right[0] - left[0] > 10:
-        min_dimeter = right[0] - left[0]
-    if min_dimeter > bot[1] - top[1] > 10:
-        min_dimeter = bot[1] - top[1]
-    if min_dimeter > bot_right[0] - top_left[0] > 10:
-        min_dimeter = bot_right[0] - top_left[0]
-    if min_dimeter > bot_right[1] - top_left[1] > 10:
-        min_dimeter = bot_right[1] - top_left[1]
+        min_diameter = right[0] - left[0]
+    if min_diameter > bot[1] - top[1] > 10:
+        min_diameter = bot[1] - top[1]
+    if min_diameter > bot_right[0] - top_left[0] > 10:
+        min_diameter = bot_right[0] - top_left[0]
+    if min_diameter > bot_right[1] - top_left[1] > 10:
+        min_diameter = bot_right[1] - top_left[1]
 
-    print("dia" + str(min_dimeter))
+    print("dia" + str(min_diameter))
     new_width = new_bot_right[0] - new_top_left[0]
     new_height = new_bot_right[1] - new_top_left[1]
 
@@ -169,13 +182,16 @@ def new_color_range(new_value):
 def define_starter(q_image):
     global last_x
     global last_y
-    global min_dimeter
+    global min_diameter
 
-    my_range = min_dimeter
+    my_range = min_diameter
+
+    color = QColor(q_image.pixel(last_x, last_y))
+    if is_pixel_matching((color.red(), color.green(), color.blue())):
+        return
 
     for y in range(3):
-        position_list = [[0, 0],
-                         [0, -my_range],
+        position_list = [[0, -my_range],
                          [+my_range, -my_range],
                          [+my_range, 0],
                          [+my_range, +my_range],
@@ -190,6 +206,18 @@ def define_starter(q_image):
                 last_x += position_list[i][0]
                 last_y += position_list[i][1]
                 return
+            else:
+                color = QColor(q_image.pixel(last_x + position_list[i][0] + variations[i][0], last_y + position_list[i][1] + variations[i][1]))
+                if is_pixel_matching((color.red(), color.green(), color.blue())):
+                    last_x += position_list[i][0] + variations[i][0]
+                    last_y += position_list[i][1] + variations[i][1]
+                    return
+                else:
+                    color = QColor(q_image.pixel(last_x + position_list[i][0] - variations[i][0], last_y + position_list[i][1] - variations[i][1]))
+                    if is_pixel_matching((color.red(), color.green(), color.blue())):
+                        last_x += position_list[i][0] - variations[i][0]
+                        last_y += position_list[i][1] - variations[i][1]
+                        return
 
-        my_range += min_dimeter
+        my_range += min_diameter
     print("lost")
