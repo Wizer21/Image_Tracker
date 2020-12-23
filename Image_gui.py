@@ -296,16 +296,16 @@ class Image_gui(QWidget):
         self.display_maxcolor.setPixmap(pix_color)
 
     @Slot(int, int)
-    def display_temporary_color(self, y, x):
+    def display_temporary_color(self, x, y):
         color_in_pixmap = QPixmap(100, 100)
-        pixel = self.map[y, x]
+        pixel = self.map[x, y]
 
         color_in_pixmap.fill(QColor(pixel[0], pixel[1], pixel[2]))
         self.dynamic_color_label.setPixmap(color_in_pixmap)
 
     @Slot(int, int)
-    def apply_newpixel_selected(self, y, x):
-        self.apply_new_color(self.map[y, x])
+    def apply_newpixel_selected(self, x, y):
+        self.apply_new_color(self.map[x, y])
         if self.are_dynamic_settings:
             self.calltracker()
 

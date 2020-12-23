@@ -10,23 +10,22 @@ from Cam_tracker import *
 from Dynamic_shape import *
 
 class Thread(QThread):
-    changePixmap = Signal(QImage)
-    video_size = Signal(int, int)
-
+    change_pixmap = Signal(QImage)
+    change_map = Signal(list)
 
     def run(self):
-        my_widht = 1920
+        my_width = 1920
         my_height = 1080
         cap = cv2.VideoCapture(0)
         fps = cap.get(cv2.CAP_PROP_FPS)  # Print fps
 
-        # width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  #Permit to get native size
-        # height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, my_width)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, my_height)
+
         cap.set(10, 4)  # SET BRIGHNESS TO 5
         cap.set(12, 20)  # SET SATURATION TO 10
 
-        self.video_size.emit(my_widht, my_height)
-        print("SIZE: " + str(my_widht) + ", " + str(my_height))
+        print("SIZE: " + str(my_width) + ", " + str(my_height))
         print("FPS: " + str(fps))
 
         while True:
@@ -36,8 +35,8 @@ class Thread(QThread):
                 h, w, ch = rgbImage.shape
                 bytesPerLine = ch * w
                 convertToQtFormat = QImage(rgbImage.data, w, h, bytesPerLine, QImage.Format_RGB888)
-                image_qt = convertToQtFormat.scaled(my_widht, my_height, Qt.KeepAspectRatio)
-                self.changePixmap.emit(image_qt)
+                self.change_pixmap.emit(convertToQtFormat)
+                self.change_map.emit(rgbImage)
 
 class Webcam_gui(QWidget):
     def __init__(self):
@@ -51,7 +50,7 @@ class Webcam_gui(QWidget):
         self.color_range = 30
         self.run_tracking = False
         self.shape = Dynamic_shape()
-        self.cam_current_image = QImage()
+        self.current_map = []
         self.timer_count = 0
 
         self.main_layout = QGridLayout(self)
@@ -97,6 +96,7 @@ class Webcam_gui(QWidget):
         self.top_color.setFixedSize(80, 40)
 
         self.graphic_view_picker.setScene(self.graphic_scene)
+        # self.graphic_view_picker.setSceneRect(0, 0, 1000, 1000)
         self.main_layout.setAlignment(Qt.AlignTop and Qt.AlignRight)
         self.color_layout.setAlignment(Qt.AlignTop)
         self.color_box.setTitle("Color")
@@ -112,6 +112,8 @@ class Webcam_gui(QWidget):
         self.text_possible_iterations.setText("Possible iterations")
         self.iterations_sec.setText("0")
 
+        self.graphic_view_picker.setFixedSize(1920, 1080)
+
         self.color_slider.valueChanged.connect(self.apply_color_range)
         self.graphic_view_picker.messager.transfert_position.connect(self.hover_position)
         self.graphic_view_picker.messager.pixel_selected.connect(self.new_color_clicked)
@@ -120,34 +122,36 @@ class Webcam_gui(QWidget):
 
     def set_up_camera(self):
         self.my_thread = Thread(self)
-        self.my_thread.changePixmap.connect(self.setImage)
-        self.my_thread.video_size.connect(self.apply_camera_size)
+        self.my_thread.change_pixmap.connect(self.setImage)
+        self.my_thread.change_map.connect(self.set_map)
         self.my_thread.start()
 
     @Slot(QImage)
     def setImage(self, image):
         self.graphic_scene.clear()
-        count = time.time()
 
         self.graphic_scene.addPixmap(QPixmap.fromImage(image))
-        self.cam_current_image = image
+
+
+    @Slot(list)
+    def set_map(self, map):
+        self.current_map = map
 
         if self.run_tracking:
-            data_shape = cam_tracker(self.cam_current_image)
+            count = time.time()
+            data_shape = cam_tracker(self.current_map)
             self.shape.build(data_shape[0], data_shape[1], data_shape[2], data_shape[3])
             self.draw_shape()
             self.apply_new_color(data_shape[4])
 
-        self.timer_count += 1
-        if self.timer_count > 5:
-            self.iterations_sec.setText(str(1/(time.time() - count)))
-            self.timer_count = 0
-
+            self.timer_count += 1
+            if self.timer_count > 5:
+                self.iterations_sec.setText(str(round(1/(time.time() - count))))
+                self.timer_count = 0
 
     @Slot(int, int)
     def hover_position(self, x, y):
-        color = QColor(self.cam_current_image.pixel(x, y))
-        self.hover_rgb = (color.red(), color.green(), color.blue())
+        self.hover_rgb = self.current_map[y][x]
 
         pix_color = QPixmap(100, 100)
         pix_color.fill(QColor(self.hover_rgb[0], self.hover_rgb[1], self.hover_rgb[2]))
@@ -155,8 +159,7 @@ class Webcam_gui(QWidget):
 
     @Slot(int, int)
     def new_color_clicked(self, x, y):
-        color = QColor(self.cam_current_image.pixel(x, y))
-        self.apply_new_color((color.red(), color.green(), color.blue()))
+        self.apply_new_color(self.current_map[y][x])
 
         new_pos(x, y, self.mid_rgb, self.color_range)
         self.run_tracking = True
@@ -203,12 +206,8 @@ class Webcam_gui(QWidget):
         self.graphic_scene.addLine(self.shape.center[0], self.shape.center[1] - middle_width, self.shape.center[0], self.shape.center[1] + middle_width, color_middle)
 
 
-    @Slot(int, int)
-    def apply_camera_size(self, width, height):
-        self.graphic_view_picker.setFixedSize(width, height)
-
     def __del__(self):
-        del self.my_threa
+        del self.my_thread
 
     @Slot(int)
     def apply_color_range(self, value):

@@ -19,6 +19,10 @@ variations = []
 min_color_limit = (0, 0, 0)
 max_color_limite = (0, 0, 0)
 
+stack_diameter = 0
+stack_diameter_iterator = 0
+
+
 def new_pos(x, y, mid_rgb, new_color_range):
     global last_x
     global last_y
@@ -30,6 +34,8 @@ def new_pos(x, y, mid_rgb, new_color_range):
     global variations
     global min_color_limit
     global max_color_limite
+    global stack_diameter
+    global stack_diameter_iterator
 
     last_x = x
     last_y = y
@@ -53,16 +59,21 @@ def new_pos(x, y, mid_rgb, new_color_range):
                  [-step, 0],
                  [-step, -step]]
 
+    stack_diameter = 0
+    stack_diameter_iterator = 0
 
-def cam_tracker(q_image):
+
+def cam_tracker(pixel_map):
     global last_x
     global last_y
     global adaptive_color
     global color_iterator
     global min_diameter
+    global stack_diameter
+    global stack_diameter_iterator
 
     cal_colors(adaptive_color)  # Calc min and max color from adaptive_color
-    define_starter(q_image)
+    define_starter(pixel_map)
 
     # Define start positions
     top = [last_x, last_y]
@@ -79,16 +90,16 @@ def cam_tracker(q_image):
     track = True
     for i in range(len(positions)):
         while track:
-            color = QColor(q_image.pixel(positions[i][0], positions[i][1]))
-            if is_pixel_matching((color.red(), color.green(), color.blue())):
+            color = pixel_map[positions[i][0]][positions[i][1]]
+            if is_pixel_matching((color[0], color[1], color[2])):
                 positions[i][0] += variations[i][0]
                 positions[i][1] += variations[i][1]
             else:
                 y = 0
                 matched = False
-                while y < 10:
-                    color = QColor(q_image.pixel(positions[i][0] + (variations[i][0] * y), positions[i][1] + (variations[i][1] * y)))
-                    if is_pixel_matching((color.red(), color.green(), color.blue())):
+                while y < 5:
+                    color = pixel_map[positions[i][0] + (variations[i][0] * y)][positions[i][1] + (variations[i][1] * y)]
+                    if is_pixel_matching((color[0], color[1], color[2])):
                         positions[i][0] += (variations[i][0] * y)
                         positions[i][1] += (variations[i][1] * y)
                         y = 10
@@ -132,7 +143,11 @@ def cam_tracker(q_image):
     if min_diameter > bot_right[1] - top_left[1] > 10:
         min_diameter = bot_right[1] - top_left[1]
 
-    print("dia" + str(min_diameter))
+    stack_diameter += min_diameter
+    stack_diameter_iterator += 1
+    min_diameter = round(stack_diameter / stack_diameter_iterator)
+
+    print("DIAMETER " + str(min_diameter))
     new_width = new_bot_right[0] - new_top_left[0]
     new_height = new_bot_right[1] - new_top_left[1]
 
@@ -179,15 +194,15 @@ def new_color_range(new_value):
     color_range = new_value
 
 
-def define_starter(q_image):
+def define_starter(pixel_map):
     global last_x
     global last_y
     global min_diameter
 
     my_range = min_diameter
 
-    color = QColor(q_image.pixel(last_x, last_y))
-    if is_pixel_matching((color.red(), color.green(), color.blue())):
+    color = pixel_map[last_x][last_y]
+    if is_pixel_matching((color[0], color[1], color[2])):
         return
 
     for y in range(3):
@@ -201,20 +216,20 @@ def define_starter(q_image):
                          [-my_range, -my_range]]
 
         for i in range(len(position_list)):
-            color = QColor(q_image.pixel(last_x + position_list[i][0] , last_y + position_list[i][1]))
-            if is_pixel_matching((color.red(), color.green(), color.blue())):
+            color = pixel_map[last_x + position_list[i][0]][last_y + position_list[i][1]]
+            if is_pixel_matching((color[0], color[1], color[2])):
                 last_x += position_list[i][0]
                 last_y += position_list[i][1]
                 return
             else:
-                color = QColor(q_image.pixel(last_x + position_list[i][0] + variations[i][0], last_y + position_list[i][1] + variations[i][1]))
-                if is_pixel_matching((color.red(), color.green(), color.blue())):
+                color = pixel_map[last_x + position_list[i][0] + variations[i][0]][last_y + position_list[i][1] + variations[i][1]]
+                if is_pixel_matching((color[0], color[1], color[2])):
                     last_x += position_list[i][0] + variations[i][0]
                     last_y += position_list[i][1] + variations[i][1]
                     return
                 else:
-                    color = QColor(q_image.pixel(last_x + position_list[i][0] - variations[i][0], last_y + position_list[i][1] - variations[i][1]))
-                    if is_pixel_matching((color.red(), color.green(), color.blue())):
+                    color = pixel_map[last_x + position_list[i][0] - variations[i][0]][last_y + position_list[i][1] - variations[i][1]]
+                    if is_pixel_matching((color[0], color[1], color[2])):
                         last_x += position_list[i][0] - variations[i][0]
                         last_y += position_list[i][1] - variations[i][1]
                         return

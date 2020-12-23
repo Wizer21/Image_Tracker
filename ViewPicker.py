@@ -14,8 +14,6 @@ class ViewPicker(QGraphicsView):
         QGraphicsView .__init__(self, parent=parent)
         self.setCursor(Qt.CrossCursor)
         self.setMouseTracking(True)
-        self.setContentsMargins(0, 0, 0, 0)
-        self.setStyleSheet("padding: 0px; ")
         self.messager = Communication()
 
     def mousePressEvent(self, event):
