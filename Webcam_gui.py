@@ -161,7 +161,7 @@ class Webcam_gui(QWidget):
     def new_color_clicked(self, x, y):
         self.apply_new_color(self.current_map[y][x])
 
-        new_pos(x, y, self.mid_rgb, self.color_range)
+        new_pos(x, y, self.mid_rgb, self.color_range, len(self.current_map[0]), len(self.current_map))
         self.run_tracking = True
 
     def apply_new_color(self, newcolor):

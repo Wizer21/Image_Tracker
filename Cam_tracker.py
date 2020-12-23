@@ -17,13 +17,15 @@ color_range = 0
 variations = []
 
 min_color_limit = (0, 0, 0)
-max_color_limite = (0, 0, 0)
+max_color_limit = (0, 0, 0)
 
 stack_diameter = 0
 stack_diameter_iterator = 0
 
+max_width = 0
+max_height = 0
 
-def new_pos(x, y, mid_rgb, new_color_range):
+def new_pos(x, y, mid_rgb, new_color_range, new_width, new_height):
     global last_x
     global last_y
     global color_iterator
@@ -33,9 +35,11 @@ def new_pos(x, y, mid_rgb, new_color_range):
     global min_diameter
     global variations
     global min_color_limit
-    global max_color_limite
+    global max_color_limit
     global stack_diameter
     global stack_diameter_iterator
+    global max_width
+    global max_height
 
     last_x = x
     last_y = y
@@ -48,7 +52,7 @@ def new_pos(x, y, mid_rgb, new_color_range):
     cal_colors(mid_rgb)
 
     min_color_limit = min_rgb
-    max_color_limite = max_rgb
+    max_color_limit = max_rgb
 
     variations = [[0, -step],
                  [+step, -step],
@@ -61,6 +65,9 @@ def new_pos(x, y, mid_rgb, new_color_range):
 
     stack_diameter = 0
     stack_diameter_iterator = 0
+
+    max_width = new_width
+    max_height = new_height
 
 
 def cam_tracker(pixel_map):
@@ -90,20 +97,24 @@ def cam_tracker(pixel_map):
     track = True
     for i in range(len(positions)):
         while track:
-            color = pixel_map[positions[i][0]][positions[i][1]]
-            if is_pixel_matching((color[0], color[1], color[2])):
-                positions[i][0] += variations[i][0]
-                positions[i][1] += variations[i][1]
+            if is_in_range(positions[i][1], positions[i][0]):
+                color = pixel_map[positions[i][1]][positions[i][0]]
+                if is_pixel_matching((color[0], color[1], color[2])):
+                    positions[i][0] += variations[i][0]
+                    positions[i][1] += variations[i][1]
+                else:
+                    break
             else:
-                y = 0
+                y = 1
                 matched = False
-                while y < 5:
-                    color = pixel_map[positions[i][0] + (variations[i][0] * y)][positions[i][1] + (variations[i][1] * y)]
-                    if is_pixel_matching((color[0], color[1], color[2])):
-                        positions[i][0] += (variations[i][0] * y)
-                        positions[i][1] += (variations[i][1] * y)
-                        y = 10
-                        matched = True
+                while y < 10:
+                    if is_in_range(positions[i][1] + (variations[i][1] * y), positions[i][0] + (variations[i][0] * y)):
+                        color = pixel_map[positions[i][1] + (variations[i][1] * y)][positions[i][0] + (variations[i][0] * y)]
+                        if is_pixel_matching((color[0], color[1], color[2])):
+                            positions[i][0] += (variations[i][0] * y)
+                            positions[i][1] += (variations[i][1] * y)
+                            y = 10
+                            matched = True
                     y += 1
                 if not matched:
                     break
@@ -118,8 +129,8 @@ def cam_tracker(pixel_map):
         adaptive_color = (int(adaptive_color[0] / color_iterator), int(adaptive_color[1] / color_iterator), int(adaptive_color[2] / color_iterator))
         if adaptive_color[0] < min_color_limit[0] or adaptive_color[1] < min_color_limit[1] or adaptive_color[2] < min_color_limit[2]:
             adaptive_color = min_color_limit
-        elif adaptive_color[0] > max_color_limite[0] or adaptive_color[1] > max_color_limite[1] or adaptive_color[2] > max_color_limite[2]:
-            adaptive_color = max_color_limite
+        elif adaptive_color[0] > max_color_limit[0] or adaptive_color[1] > max_color_limit[1] or adaptive_color[2] > max_color_limit[2]:
+            adaptive_color = max_color_limit
         color_iterator = 0
 
     new_top_left = top_left
@@ -160,9 +171,12 @@ def is_pixel_matching(pixel):
 
     if min_rgb[0] <= pixel[0] <= max_rgb[0] and min_rgb[1] <= pixel[1] <= max_rgb[1] and min_rgb[2] <= pixel[2] <= max_rgb[2]:
 
-        adaptive_color = ((adaptive_color[0] + pixel[0]), adaptive_color[1] + pixel[1], adaptive_color[2] + pixel[2])
-        color_iterator += 1
+        red = int(adaptive_color[0]) + pixel[0]
+        green = int(adaptive_color[1]) + pixel[1]
+        blue = int(adaptive_color[2]) + pixel[2]
 
+        adaptive_color = (red, green, blue)
+        color_iterator += 1
         return True
 
     return False
@@ -201,9 +215,10 @@ def define_starter(pixel_map):
 
     my_range = min_diameter
 
-    color = pixel_map[last_x][last_y]
-    if is_pixel_matching((color[0], color[1], color[2])):
-        return
+    if is_in_range(last_y, last_x):
+        color = pixel_map[last_y][last_x]
+        if is_pixel_matching((color[0], color[1], color[2])):
+            return
 
     for y in range(3):
         position_list = [[0, -my_range],
@@ -216,23 +231,29 @@ def define_starter(pixel_map):
                          [-my_range, -my_range]]
 
         for i in range(len(position_list)):
-            color = pixel_map[last_x + position_list[i][0]][last_y + position_list[i][1]]
-            if is_pixel_matching((color[0], color[1], color[2])):
-                last_x += position_list[i][0]
-                last_y += position_list[i][1]
-                return
-            else:
-                color = pixel_map[last_x + position_list[i][0] + variations[i][0]][last_y + position_list[i][1] + variations[i][1]]
+            if is_in_range(last_y + position_list[i][1], last_x + position_list[i][0]):
+                color = pixel_map[last_y + position_list[i][1]][last_x + position_list[i][0]]
                 if is_pixel_matching((color[0], color[1], color[2])):
-                    last_x += position_list[i][0] + variations[i][0]
-                    last_y += position_list[i][1] + variations[i][1]
+                    last_x += position_list[i][0]
+                    last_y += position_list[i][1]
                     return
-                else:
-                    color = pixel_map[last_x + position_list[i][0] - variations[i][0]][last_y + position_list[i][1] - variations[i][1]]
+            else:
+                if is_in_range(last_y + position_list[i][1] + variations[i][1], last_x + position_list[i][0] + variations[i][0]):
+                    color = pixel_map[last_y + position_list[i][1] + variations[i][1]][last_x + position_list[i][0] + variations[i][0]]
                     if is_pixel_matching((color[0], color[1], color[2])):
-                        last_x += position_list[i][0] - variations[i][0]
-                        last_y += position_list[i][1] - variations[i][1]
+                        last_x += position_list[i][0] + variations[i][0]
+                        last_y += position_list[i][1] + variations[i][1]
                         return
+                else:
+                    if is_in_range(last_y + position_list[i][1] - variations[i][1], last_x + position_list[i][0] - variations[i][0]):
+                        color = pixel_map[last_y + position_list[i][1] - variations[i][1]][last_x + position_list[i][0] - variations[i][0]]
+                        if is_pixel_matching((color[0], color[1], color[2])):
+                            last_x += position_list[i][0] - variations[i][0]
+                            last_y += position_list[i][1] - variations[i][1]
+                            return
 
         my_range += min_diameter
     print("lost")
+
+def is_in_range(y, x):
+    return 0 <= y <= max_height and 0 <= x <= max_width
