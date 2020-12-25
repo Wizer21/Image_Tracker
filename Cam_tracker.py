@@ -97,24 +97,18 @@ def cam_tracker(pixel_map):
     track = True
     for i in range(len(positions)):
         while track:
-            if is_in_range(positions[i][1], positions[i][0]):
-                color = pixel_map[positions[i][1]][positions[i][0]]
-                if is_pixel_matching((color[0], color[1], color[2])):
-                    positions[i][0] += variations[i][0]
-                    positions[i][1] += variations[i][1]
-                else:
-                    break
+            if validate_pixel(pixel_map, positions[i][1], positions[i][0]):
+                positions[i][0] += variations[i][0]
+                positions[i][1] += variations[i][1]
             else:
                 y = 1
                 matched = False
                 while y < 10:
-                    if is_in_range(positions[i][1] + (variations[i][1] * y), positions[i][0] + (variations[i][0] * y)):
-                        color = pixel_map[positions[i][1] + (variations[i][1] * y)][positions[i][0] + (variations[i][0] * y)]
-                        if is_pixel_matching((color[0], color[1], color[2])):
-                            positions[i][0] += (variations[i][0] * y)
-                            positions[i][1] += (variations[i][1] * y)
-                            y = 10
-                            matched = True
+                    if validate_pixel(pixel_map, positions[i][1] + (variations[i][1] * y), positions[i][0] + (variations[i][0] * y)):
+                        positions[i][0] += (variations[i][0] * y)
+                        positions[i][1] += (variations[i][1] * y)
+                        y = 10
+                        matched = True
                     y += 1
                 if not matched:
                     break
@@ -215,10 +209,9 @@ def define_starter(pixel_map):
 
     my_range = min_diameter
 
-    if is_in_range(last_y, last_x):
-        color = pixel_map[last_y][last_x]
-        if is_pixel_matching((color[0], color[1], color[2])):
-            return
+    color = pixel_map[last_y][last_x]
+    if is_pixel_matching((color[0], color[1], color[2])):
+        return
 
     for y in range(3):
         position_list = [[0, -my_range],
@@ -231,29 +224,29 @@ def define_starter(pixel_map):
                          [-my_range, -my_range]]
 
         for i in range(len(position_list)):
-            if is_in_range(last_y + position_list[i][1], last_x + position_list[i][0]):
-                color = pixel_map[last_y + position_list[i][1]][last_x + position_list[i][0]]
-                if is_pixel_matching((color[0], color[1], color[2])):
-                    last_x += position_list[i][0]
-                    last_y += position_list[i][1]
-                    return
+            if validate_pixel(pixel_map, last_y + position_list[i][1], last_x + position_list[i][0]):
+                last_x += position_list[i][0]
+                last_y += position_list[i][1]
+                return
             else:
-                if is_in_range(last_y + position_list[i][1] + variations[i][1], last_x + position_list[i][0] + variations[i][0]):
-                    color = pixel_map[last_y + position_list[i][1] + variations[i][1]][last_x + position_list[i][0] + variations[i][0]]
-                    if is_pixel_matching((color[0], color[1], color[2])):
-                        last_x += position_list[i][0] + variations[i][0]
-                        last_y += position_list[i][1] + variations[i][1]
-                        return
+                if validate_pixel(pixel_map, last_y + position_list[i][1] + variations[i][1], last_x + position_list[i][0] + variations[i][0]):
+                    last_x += position_list[i][0] + variations[i][0]
+                    last_y += position_list[i][1] + variations[i][1]
+                    return
                 else:
-                    if is_in_range(last_y + position_list[i][1] - variations[i][1], last_x + position_list[i][0] - variations[i][0]):
-                        color = pixel_map[last_y + position_list[i][1] - variations[i][1]][last_x + position_list[i][0] - variations[i][0]]
-                        if is_pixel_matching((color[0], color[1], color[2])):
-                            last_x += position_list[i][0] - variations[i][0]
-                            last_y += position_list[i][1] - variations[i][1]
-                            return
+                    if validate_pixel(pixel_map, last_y + position_list[i][1] - variations[i][1], last_x + position_list[i][0] - variations[i][0]):
+                        last_x += position_list[i][0] - variations[i][0]
+                        last_y += position_list[i][1] - variations[i][1]
+                        return
 
         my_range += min_diameter
     print("lost")
 
-def is_in_range(y, x):
-    return 0 <= y <= max_height and 0 <= x <= max_width
+
+def validate_pixel(pixel_map, y, x):
+    try:
+        color = pixel_map[y][x]
+        return is_pixel_matching((color[0], color[1], color[2]))
+    except IndexError:
+        print("catched")
+        return False
