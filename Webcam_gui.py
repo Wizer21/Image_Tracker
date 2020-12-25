@@ -57,25 +57,40 @@ class Webcam_gui(QWidget):
         self.graphic_scene = QGraphicsScene(self)
         self.graphic_view_picker = ViewPicker()
 
-        self.color_box = QGroupBox(self)
+        self.color_box = QGroupBox("Color", self)
         self.color_layout = QGridLayout(self)
-        self.text_color = QLabel(self)
+        self.text_color = QLabel("Hovered", self)
         self.hover_color = QLabel(self)
         self.min_color = QLabel(self)
         self.mid_color = QLabel(self)
         self.top_color = QLabel(self)
         self.color_slider = QSlider(self)
-        self.color_value_label = QLabel(self)
+        self.color_value_label = QLabel(str(self.color_range), self)
 
-        self.text_possible_iterations = QLabel(self)
-        self.iterations_sec = QLabel(self)
+        self.group_item = QGroupBox(self)
+        self.item_layout = QGridLayout(self)
+        self.position_text = QLabel("Position", self)
+        self.x_indicator = QLabel("X", self)
+        self.x_value = QLabel("0", self)
+        self.y_indicator = QLabel("Y", self)
+        self.y_value = QLabel("0", self)
+        self.diameter_text = QLabel("Diameter", self)
+        self.diameter_value = QLabel("0 pixels", self)
+
+        self.box_time = QGroupBox("Time", self)
+        self.time_layout = QVBoxLayout(self)
+        self.calc_time = QLabel("Calc time", self)
+        self.timer_display = QLabel("0", self)
+        self.text_possible_iterations = QLabel("Possible iterations", self)
+        self.iterations_sec = QLabel("0", self)
 
         self.set_up_camera()
         self.build_ui()
 
     def build_ui(self):
         self.setLayout(self.main_layout)
-        self.main_layout.addWidget(self.graphic_view_picker, 0, 0)
+        self.main_layout.addWidget(self.graphic_view_picker, 0, 0, 4, 1)
+
         self.main_layout.addWidget(self.color_box, 0, 1)
         self.color_box.setLayout(self.color_layout)
 
@@ -87,8 +102,22 @@ class Webcam_gui(QWidget):
         self.color_layout.addWidget(self.color_slider, 2, 0, 1, 2)
         self.color_layout.addWidget(self.color_value_label, 2, 2)
 
-        self.main_layout.addWidget(self.text_possible_iterations, 1, 1)
-        self.main_layout.addWidget(self.iterations_sec, 2, 1)
+        self.main_layout.addWidget(self.group_item, 1, 1)
+        self.group_item.setLayout(self.item_layout)
+        self.item_layout.addWidget(self.position_text, 0, 0, 1, 4)
+        self.item_layout.addWidget(self.x_indicator, 1, 0)
+        self.item_layout.addWidget(self.x_value, 1, 1)
+        self.item_layout.addWidget(self.y_indicator, 1, 2)
+        self.item_layout.addWidget(self.y_value, 1, 3)
+        self.item_layout.addWidget(self.diameter_text, 2, 0, 1, 4)
+        self.item_layout.addWidget(self.diameter_value, 3, 0, 1, 4)
+
+        self.main_layout.addWidget(self.box_time, 2, 1)
+        self.box_time.setLayout(self.time_layout)
+        self.time_layout.addWidget(self.calc_time)
+        self.time_layout.addWidget(self.timer_display)
+        self.time_layout.addWidget(self.text_possible_iterations)
+        self.time_layout.addWidget(self.iterations_sec)
 
         self.hover_color.setFixedSize(80, 40)
         self.min_color.setFixedSize(80, 40)
@@ -96,12 +125,8 @@ class Webcam_gui(QWidget):
         self.top_color.setFixedSize(80, 40)
 
         self.graphic_view_picker.setScene(self.graphic_scene)
-        # self.graphic_view_picker.setSceneRect(0, 0, 1000, 1000)
-        self.main_layout.setAlignment(Qt.AlignTop and Qt.AlignRight)
+        self.main_layout.setAlignment(Qt.AlignTop)
         self.color_layout.setAlignment(Qt.AlignTop)
-        self.color_box.setTitle("Color")
-        self.text_color.setText("Hovered")
-        self.color_value_label.setText(str(self.color_range))
 
         self.color_slider.setOrientation(Qt.Horizontal)
         self.color_slider.setRange(0, 50)
@@ -109,8 +134,7 @@ class Webcam_gui(QWidget):
         self.color_slider.setPageStep(1)
         self.color_slider.setCursor(Qt.PointingHandCursor)
 
-        self.text_possible_iterations.setText("Possible iterations")
-        self.iterations_sec.setText("0")
+        self.item_layout.setAlignment(Qt.AlignTop)
 
         self.graphic_view_picker.setFixedSize(1920, 1080)
 
@@ -146,6 +170,8 @@ class Webcam_gui(QWidget):
 
             self.timer_count += 1
             if self.timer_count > 5:
+                self.update_item_box()
+                self.timer_display.setText(str(round(time.time() - count, 5)))
                 self.iterations_sec.setText(str(round(1/(time.time() - count))))
                 self.timer_count = 0
 
@@ -209,8 +235,18 @@ class Webcam_gui(QWidget):
     def __del__(self):
         del self.my_thread
 
+
     @Slot(int)
     def apply_color_range(self, value):
         self.color_range = value
         self.color_value_label.setText(str(value))
         new_color_range(value)
+
+    def update_item_box(self):
+        self.x_value.setText(str(int(self.shape.center[0])))
+        self.y_value.setText(str(int(self.shape.center[1])))
+
+        if self.shape.width > self.shape.height:
+            self.diameter_value.setText(str(self.shape.height) + " pixels")
+        else:
+            self.diameter_value.setText(str(self.shape.width) + " pixels")

@@ -39,49 +39,49 @@ class Image_gui(QWidget):
         self.settingswidget = QWidget(self)
         self.borderlayout = QGridLayout(self)
 
-        self.button_new_file = QPushButton(self)
+        self.button_new_file = QPushButton("New File", self)
 
-        self.settigns_box = QGroupBox(self)  # SETTINGS
+        self.settigns_box = QGroupBox("Settings", self)  # SETTINGS
         self.settingslayout = QGridLayout(self)
 
         self.widget_step = QWidget(self)  # STEP
         self.layout_step = QGridLayout(self)
-        self.title_step = QLabel(self)
-        self.value_step = QLabel(self)
+        self.title_step = QLabel("Step", self)
+        self.value_step = QLabel("2", self)
         self.scroll_step = QSlider(self)
-        self.combine_shapes = QLabel(self)
+        self.combine_shapes = QLabel("Combine shapes", self)
         self.scroll_combine = QSlider(self)
-        self.display_combine_range = QLabel(self)
+        self.display_combine_range = QLabel("Off", self)
 
         self.widget_color = QWidget(self)  # COLOR
         self.layout_color = QGridLayout(self)
-        self.title_color = QLabel(self)
+        self.title_color = QLabel("Color", self)
         self.dynamic_color_label = QLabel(self)
         self.display_mincolor = QLabel(self)
         self.display_currentcolor = QLabel(self)
         self.display_maxcolor = QLabel(self)
         self.scroll_color = QSlider(self)
 
-        self.box_build = QGroupBox(self)  # BUILD
+        self.box_build = QGroupBox("Build", self)  # BUILD
         self.grid_build = QGridLayout(self)
-        self.display_calctime = QLabel(self)
-        self.calctime = QLabel(self)
-        self.graph_sec = QLabel(self)
-        self.display_graph_sec = QLabel(self)
-        self.display_nbr_item = QLabel(self)
-        self.nbr_item = QLabel(self)
+        self.display_calctime = QLabel("0", self)
+        self.calctime = QLabel("Calc time", self)
+        self.graph_sec = QLabel("Display time", self)
+        self.display_graph_sec = QLabel("0", self)
+        self.display_nbr_item = QLabel("0", self)
+        self.nbr_item = QLabel("Items found", self)
 
-        self.buttonLoad = QPushButton(self)  # LOAD
-        self.quick_load = QLabel(self)
+        self.buttonLoad = QPushButton("Load", self)  # LOAD
+        self.quick_load = QLabel("Dynamic load", self)
         self.box_isdynamic = QCheckBox(self)
 
-        self.graphic_box = QGroupBox(self)  # GRAPHIC
+        self.graphic_box = QGroupBox("Graphic", self)  # GRAPHIC
         self.layout_graph = QGridLayout(self)
-        self.points = QLabel(self)
+        self.points = QLabel("Points", self)
         self.point_box = QCheckBox(self)
-        self.square = QLabel(self)
+        self.square = QLabel("Square", self)
         self.square_box = QCheckBox(self)
-        self.center = QLabel(self)
+        self.center = QLabel("Center", self)
         self.center_box = QCheckBox(self)
 
         self.ini_gui()
@@ -147,26 +147,18 @@ class Image_gui(QWidget):
         self.layout_graph.addWidget(self.center_box, 2, 1, Qt.AlignLeft)
 
         # Complete Settings
-        self.button_new_file.setText("New File")
-
-        self.settigns_box.setTitle("Settings")
-
-        self.title_step.setText("Step")  # STEP
-        self.value_step.setText("2")
-        self.scroll_step.setOrientation(Qt.Horizontal)
+        self.scroll_step.setOrientation(Qt.Horizontal)  # STEP
         self.scroll_step.setRange(2, 40)
         self.scroll_step.setValue(2)
         self.scroll_step.setPageStep(1)
         self.scroll_step.setCursor(Qt.PointingHandCursor)
-        self.display_combine_range.setText("Off")
         self.scroll_combine.setOrientation(Qt.Horizontal)
         self.scroll_combine.setRange(0, 50)
         self.scroll_combine.setValue(0)
         self.scroll_combine.setPageStep(1)
         self.scroll_combine.setCursor(Qt.PointingHandCursor)
 
-        self.title_color.setText("Color")  # COLOR
-        self.dynamic_color_label.setFixedSize(80, 40)
+        self.dynamic_color_label.setFixedSize(80, 40)  # COLOR
         self.display_mincolor.setFixedSize(80, 40)
         self.display_currentcolor.setFixedSize(80, 40)
         self.display_maxcolor.setFixedSize(80, 40)
@@ -174,26 +166,11 @@ class Image_gui(QWidget):
         self.scroll_color.setOrientation(Qt.Horizontal)
         self.scroll_color.setCursor(Qt.PointingHandCursor)
 
-        self.box_build.setTitle("Build")  # BUILD
-        self.calctime.setText("Calc time")
-        self.display_calctime.setText("0")
-        self.graph_sec.setText("Display time")
-        self.display_graph_sec.setText("0")
-        self.nbr_item.setText("Items found")
-        self.display_nbr_item.setText("0")
-
-        self.buttonLoad.setText("Load")  # LOAD
-        self.buttonLoad.setCursor(Qt.PointingHandCursor)
-        self.quick_load.setText("Dynamic load")
-        self.combine_shapes.setText("Combine shapes")
+        self.buttonLoad.setCursor(Qt.PointingHandCursor)  # LOAD
 
         self.borderlayout.setAlignment(Qt.AlignTop)
 
-        self.graphic_box.setTitle("Graphic")  # GRAPHIC
-        self.points.setText("Points")
-        self.square.setText("Square")
-        self.center.setText("Center")
-        self.point_box.setChecked(True)
+        self.point_box.setChecked(True)  # GRAPHIC
         self.square_box.setChecked(True)
         self.center_box.setChecked(True)
 

@@ -120,13 +120,9 @@ def cam_tracker(pixel_map):
     if new_diameter > bot_right[1] - top_left[1] > 10:
         new_diameter = bot_right[1] - top_left[1]
 
-    print("new" + str(new_diameter))
-    print(str(min_diameter))
-    print(str(new_diameter - min_diameter))
     if new_diameter > 10:
         min_diameter += (new_diameter - min_diameter) * 0.01
 
-    print("DIAMETER DIAMETER " + str(round(min_diameter)))
     new_width = bot_right[0] - top_left[0]
     new_height = bot_right[1] - top_left[1]
 
@@ -213,19 +209,68 @@ def define_starter(pixel_map):
     global min_diameter
 
     my_range = round(min_diameter)
+    half_range = round(min_diameter/2)
 
     if validate_pixel(pixel_map, last_y, last_x):
         return
 
-    for y in range(3):
-        position_list = [[0, -my_range],
-                         [+my_range, -my_range],
-                         [+my_range, 0],
-                         [+my_range, +my_range],
-                         [0, +my_range],
-                         [-my_range, +my_range],
-                         [-my_range, 0],
-                         [-my_range, -my_range]]
+    stepper = [[0, -step],
+             [+step, -step],
+             [+step, 0],
+             [+step, +step],
+             [0, +step],
+             [-step, +step],
+             [-step, 0],
+             [-step, -step]]
+
+    maxi_stepper = [[0, -step],
+                 [0, -step],
+                 [+step, -step],
+                 [+step, 0],
+                 [+step, 0],
+                 [+step, 0],
+                 [+step, +step],
+                 [0, +step],
+                 [0, +step],
+                 [0, +step],
+                 [-step, +step],
+                 [-step, 0],
+                 [-step, 0],
+                 [-step, 0],
+                 [-step, -step],
+                 [0, -step]]
+
+    for y in range(4):
+
+        if y > 1:
+            position_list = [[0, -my_range],
+                             [0 + half_range, -my_range],
+                             [+my_range, -my_range],
+                             [+my_range, 0 - half_range],
+                             [+my_range, 0],
+                             [+my_range, 0 + half_range],
+                             [+my_range, +my_range],
+                             [0 + half_range, +my_range],
+                             [0, +my_range],
+                             [0 - half_range, +my_range],
+                             [-my_range, +my_range],
+                             [-my_range, 0 + half_range],
+                             [-my_range, 0],
+                             [-my_range, 0 - half_range],
+                             [-my_range, -my_range],
+                             [0 - half_range, -my_range]]
+
+            stepper = maxi_stepper
+
+        else:
+            position_list = [[0, -my_range],
+                             [+my_range, -my_range],
+                             [+my_range, 0],
+                             [+my_range, +my_range],
+                             [0, +my_range],
+                             [-my_range, +my_range],
+                             [-my_range, 0],
+                             [-my_range, -my_range]]
 
         for i in range(len(position_list)):
             if validate_pixel(pixel_map, last_y + position_list[i][1], last_x + position_list[i][0]):
@@ -233,17 +278,18 @@ def define_starter(pixel_map):
                 last_y += position_list[i][1]
                 return
             else:
-                if validate_pixel(pixel_map, last_y + position_list[i][1] + variations[i][1], last_x + position_list[i][0] + variations[i][0]):
-                    last_x += position_list[i][0] + variations[i][0]
-                    last_y += position_list[i][1] + variations[i][1]
+                if validate_pixel(pixel_map, last_y + position_list[i][1] + stepper[i][1], last_x + position_list[i][0] + stepper[i][0]):
+                    last_x += position_list[i][0] + stepper[i][0]
+                    last_y += position_list[i][1] + stepper[i][1]
                     return
                 else:
-                    if validate_pixel(pixel_map, last_y + position_list[i][1] - variations[i][1], last_x + position_list[i][0] - variations[i][0]):
-                        last_x += position_list[i][0] - variations[i][0]
-                        last_y += position_list[i][1] - variations[i][1]
+                    if validate_pixel(pixel_map, last_y + position_list[i][1] - stepper[i][1], last_x + position_list[i][0] - stepper[i][0]):
+                        last_x += position_list[i][0] - stepper[i][0]
+                        last_y += position_list[i][1] - stepper[i][1]
                         return
 
         my_range += round(min_diameter)
+        half_range += round(min_diameter/2)
     print("lost")
 
 
