@@ -117,10 +117,14 @@ QMenu::item:selected {
 
 QCheckBox {
     border: 1px solid transparent;
-    min-height: 26px;
+    min-height: 25px;
     background-color: transparent;
   }  
-  
+    QCheckBox::indicator {
+    min-height: 20px;
+    min-width: 20px;
+  }
+
   QCheckBox::indicator::unchecked {
     background-color: white;
     border: 2px solid #1c1c1c;
@@ -132,7 +136,7 @@ QCheckBox {
   
   QCheckBox::indicator::checked {
     background-color: #1c1c1c;
-    border: 4px solid white;
+    border: 3px solid white;
   }
   QCheckBox::indicator::checked::hover {
     border: 2px solid white;

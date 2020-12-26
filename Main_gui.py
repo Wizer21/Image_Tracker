@@ -40,6 +40,13 @@ class Main_gui(QMainWindow):
         self.image_action.setText("Image")
         self.webcam_action.setText("Webcam")
 
+        map = QPixmap("images/image.png")
+        map = map.scaled(30, 30, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.image_action.setIcon(map)
+        map.load("images/webcam.png")
+        map = map.scaled(30, 30, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.webcam_action.setIcon(map)
+
         self.image_action.triggered.connect(self.set_at_image)
         self.webcam_action.triggered.connect(self.set_at_webcam)
 

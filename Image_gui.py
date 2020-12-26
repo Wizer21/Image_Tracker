@@ -134,19 +134,26 @@ class Image_gui(QWidget):
         self.grid_build.addWidget(self.display_nbr_item, 5, 0)
 
         self.borderlayout.addWidget(self.buttonLoad, 3, 0, 1, 2)  # LOAD
-        self.borderlayout.addWidget(self.quick_load, 4, 0, Qt.AlignRight)
-        self.borderlayout.addWidget(self.box_isdynamic, 4, 1)
+        self.borderlayout.addWidget(self.box_isdynamic, 4, 0)
+        self.borderlayout.addWidget(self.quick_load, 4, 1)
+        self.borderlayout.setColumnStretch(0, 0)
+        self.borderlayout.setColumnStretch(1, 1)
 
         self.borderlayout.addWidget(self.graphic_box, 5, 0, 1, 2)
         self.graphic_box.setLayout(self.layout_graph)
-        self.layout_graph.addWidget(self.points, 0, 0)
-        self.layout_graph.addWidget(self.point_box, 0, 1, Qt.AlignLeft)
-        self.layout_graph.addWidget(self.square, 1, 0)
-        self.layout_graph.addWidget(self.square_box, 1, 1, Qt.AlignLeft)
-        self.layout_graph.addWidget(self.center, 2, 0)
-        self.layout_graph.addWidget(self.center_box, 2, 1, Qt.AlignLeft)
+        self.layout_graph.addWidget(self.point_box, 0, 0)
+        self.layout_graph.addWidget(self.points, 0, 1)
+        self.layout_graph.addWidget(self.square_box, 1, 0)
+        self.layout_graph.addWidget(self.square, 1, 1)
+        self.layout_graph.addWidget(self.center_box, 2, 0)
+        self.layout_graph.addWidget(self.center, 2, 1)
+        self.layout_graph.setColumnStretch(0, 0)
+        self.layout_graph.setColumnStretch(1, 1)
 
         # Complete Settings
+        self.button_new_file.setCursor(Qt.PointingHandCursor)
+        self.button_new_file.setIcon(QPixmap("images/newfile.png"))
+
         self.scroll_step.setOrientation(Qt.Horizontal)  # STEP
         self.scroll_step.setRange(2, 40)
         self.scroll_step.setValue(2)
@@ -167,12 +174,17 @@ class Image_gui(QWidget):
         self.scroll_color.setCursor(Qt.PointingHandCursor)
 
         self.buttonLoad.setCursor(Qt.PointingHandCursor)  # LOAD
+        self.box_isdynamic.setCursor(Qt.PointingHandCursor)
+        self.buttonLoad.setIcon(QPixmap("images/quickload.png"))
 
         self.borderlayout.setAlignment(Qt.AlignTop)
 
         self.point_box.setChecked(True)  # GRAPHIC
         self.square_box.setChecked(True)
         self.center_box.setChecked(True)
+        self.point_box.setCursor(Qt.PointingHandCursor)
+        self.square_box.setCursor(Qt.PointingHandCursor)
+        self.center_box.setCursor(Qt.PointingHandCursor)
 
         self.apply_new_color(self.my_color)
 
@@ -374,6 +386,6 @@ class Image_gui(QWidget):
 
     def select_new_file(self):
         container = QFileDialog.getOpenFileName(self, "Open Image", "", "Image Files (*.png *.jpg)")
-        self.image_url = container[0]
-
-        self.load_image()
+        if not container[0] == "":
+            self.image_url = container[0]
+            self.load_image()
