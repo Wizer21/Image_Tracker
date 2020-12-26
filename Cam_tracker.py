@@ -16,9 +16,6 @@ color_iterator = 0
 color_range = 0
 variations = []
 
-red_to_green = [0, 0]
-red_to_blue = [0, 0]
-
 max_width = 0
 max_height = 0
 
@@ -43,8 +40,8 @@ def new_pos(x, y, new_mid_rgb, newcolor_range, new_width, new_height):
 
     adaptive_color = new_mid_rgb
     color_iterator = 1
+
     cal_colors()
-    ini_color()
 
     variations = [[0, -step],
                  [+step, -step],
@@ -88,7 +85,7 @@ def cam_tracker(pixel_map):
             else:
                 y = 1
                 matched = False
-                while y < 5:
+                while y < 10:
                     if validate_pixel(pixel_map, positions[i][1] + (variations[i][1] * y), positions[i][0] + (variations[i][0] * y)):
                         positions[i][0] += (variations[i][0] * y)
                         positions[i][1] += (variations[i][1] * y)
@@ -164,13 +161,14 @@ def update_adaptive_color():
         adaptive_color = (round(int(adaptive_color[0] / color_iterator)), round(int(adaptive_color[1] / color_iterator)), round(int(adaptive_color[2] / color_iterator)))
         color_iterator = 1
 
-        # adaptive_red_green = adaptive_color[1] - adaptive_color[0]  # CHECK IF STILL SAME COLOR
-        # if not red_to_green[0] < adaptive_red_green < red_to_green[1]:
-        #     adaptive_color = (adaptive_color[0], red_to_green[0], adaptive_color[2])
+        # new_color = [adaptive_color[0], adaptive_color[1], adaptive_color[2]]
+        # for i in range(len(new_color)):
+        #     if new_color[i] <= native_rgb_min[i]:
+        #         new_color[i] = native_rgb_min[i]
+        #     elif native_rgb_max[i] <= new_color[i]:
+        #         new_color[i] = native_rgb_max[i]
         #
-        # adaptive_red_blue = adaptive_color[2] - adaptive_color[0]
-        # if not red_to_blue[0] < adaptive_red_blue < red_to_blue[1]:
-        #     adaptive_color = (adaptive_color[0], red_to_blue[0], adaptive_color[2])
+        # adaptive_color = new_color
 
 
 def cal_colors():
@@ -194,31 +192,16 @@ def cal_colors():
     max_rgb = (rgb[0], rgb[1], rgb[2])
 
 
-def ini_color():
-    global red_to_green
-    global red_to_blue
-
-    # half_range = round(color_range / 2)
-    #
-    # red_to_green = [0, int(mid_rgb[1]) - int(mid_rgb[0])]
-    # red_to_green[0] = red_to_green[1] - half_range
-    # red_to_green[1] = red_to_green[1] + half_range
-    #
-    # red_to_blue = [0, int(mid_rgb[2]) - int(mid_rgb[0])]
-    # red_to_blue[0] = red_to_blue[1] - half_range
-    # red_to_blue[1] = red_to_blue[1] + half_range
-
-
 def new_color_range(new_value):
     global color_range
+
     color_range = new_value
-    ini_color()
 
 
 def define_starter(pixel_map):
     global last_x
     global last_y
-    global min_diameter
+    global adaptive_color
 
     my_range = round(min_diameter)
     half_range = round(min_diameter/2)
@@ -302,7 +285,6 @@ def define_starter(pixel_map):
 
         my_range += round(min_diameter)
         half_range += round(min_diameter/2)
-    print("lost")
 
 
 def validate_pixel(pixel_map, y, x):
@@ -310,5 +292,4 @@ def validate_pixel(pixel_map, y, x):
         color = pixel_map[y][x]
         return is_pixel_matching((color[0], color[1], color[2]))
     except IndexError:
-        print("catched")
         return False

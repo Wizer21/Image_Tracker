@@ -49,7 +49,7 @@ class Webcam_gui(QWidget):
         self.min_rgb = (0, 0, 0)
         self.mid_rgb = (0, 0, 0)
         self.max_rgb = (0, 0, 0)
-        self.color_range = 30
+        self.color_range = 15
         self.run_tracking = False
         self.shape = Dynamic_shape()
         self.current_map = []
@@ -163,7 +163,7 @@ class Webcam_gui(QWidget):
 
         self.color_slider.setOrientation(Qt.Horizontal)
         self.color_slider.setRange(0, 50)
-        self.color_slider.setValue(30)
+        self.color_slider.setValue(self.color_range)
         self.color_slider.setPageStep(1)
         self.color_slider.setCursor(Qt.PointingHandCursor)
 
@@ -305,7 +305,6 @@ class Webcam_gui(QWidget):
     @Slot(list)
     def set_up_camera_size(self, size):
         self.camera_size = size
-        print(str(size))
         self.graphic_view_picker.setFixedSize(size[0], size[1])
 
         self.top_side = [0, int((size[1]/5) * 2)]
