@@ -101,6 +101,8 @@ def cam_tracker(pixel_map):
     last_x = left[0] + int(((right[0] - left[0])/2))  # NEXT STARTER
     last_y = top[1] + int(((bot[1] - top[1])/2))
 
+    point_stack = positions.copy()
+
     if left[0] < top_left[0]:  # CORNERS TO LARGEST WAY
         top_left[0] = left[0]
     if bot_left[0] < top_left[0]:
@@ -137,7 +139,7 @@ def cam_tracker(pixel_map):
 
     update_adaptive_color()
 
-    return top_left, bot_right, new_width, new_height, adaptive_color
+    return top_left, bot_right, new_width, new_height, point_stack, adaptive_color
 
 
 def is_pixel_matching(pixel):

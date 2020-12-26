@@ -12,23 +12,19 @@ from Dynamic_shape import *
 class Thread(QThread):
     change_pixmap = Signal(QImage)
     change_map = Signal(list)
-    camera_size = Signal(list)
+    camera_param = Signal(list)
 
     def run(self):
         my_width = 1920
         my_height = 1080
         cap = cv2.VideoCapture(0)
-        fps = cap.get(cv2.CAP_PROP_FPS)  # Print fps
 
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, my_width)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, my_height)
-
         cap.set(10, 4)  # SET BRIGHNESS TO 5
         cap.set(12, 20)  # SET SATURATION TO 10
 
-        self.camera_size.emit([cap.get(cv2.CAP_PROP_FRAME_WIDTH), cap.get(cv2.CAP_PROP_FRAME_HEIGHT)])
-        print("SIZE: " + str(my_width) + ", " + str(my_height))
-        print("FPS: " + str(fps))
+        self.camera_param.emit([cap.get(cv2.CAP_PROP_FRAME_WIDTH), cap.get(cv2.CAP_PROP_FRAME_HEIGHT), cap.get(cv2.CAP_PROP_FPS)])
 
         while True:
             ret, frame = cap.read()
@@ -55,6 +51,11 @@ class Webcam_gui(QWidget):
         self.current_map = []
         self.timer_count = 0
         self.camera_size = [0, 0]
+        self.show_points = False
+        self.show_center = True
+        self.show_rect = True
+        self.pen_size = 5
+        self.slow_motion = False
 
         self.main_layout = QGridLayout(self)
         self.graphic_scene = QGraphicsScene(self)
@@ -72,6 +73,10 @@ class Webcam_gui(QWidget):
 
         self.group_item = QGroupBox("Navigation", self)
         self.item_layout = QGridLayout(self)
+        self.resolution_display = QLabel("Resolution", self)
+        self.resolution = QLabel("0", self)
+        self.fps_display = QLabel("FPS", self)
+        self.fps = QLabel("0", self)
         self.position_text = QLabel("Position", self)
         self.x_indicator = QLabel("X", self)
         self.x_value = QLabel("0", self)
@@ -108,12 +113,26 @@ class Webcam_gui(QWidget):
 
         self.button_tracking = QPushButton("Tracking Off", self)
 
+        self.draw_box = QGroupBox("Draw", self)
+        self.draw_layout = QGridLayout()
+        self.point_text = QLabel("Show points", self)
+        self.check_points = QCheckBox()
+        self.squares_text = QLabel("Show squares", self)
+        self.check_squares = QCheckBox()
+        self.center_text = QLabel("Show center", self)
+        self.check_center = QCheckBox()
+        self.draw_size = QLabel("Draw width", self)
+        self.draw_size_slider = QSlider()
+        self.draw_size_display_value = QLabel(str(self.pen_size), self)
+        self.slow_motion_text = QLabel("Slow motion", self)
+        self.slow_box = QCheckBox(self)
+
         self.set_up_camera()
         self.build_ui()
 
     def build_ui(self):
         self.setLayout(self.main_layout)
-        self.main_layout.addWidget(self.graphic_view_picker, 0, 0, 4, 1)
+        self.main_layout.addWidget(self.graphic_view_picker, 0, 0, 5, 1)
 
         self.main_layout.addWidget(self.color_box, 0, 1)
         self.color_box.setLayout(self.color_layout)
@@ -128,16 +147,20 @@ class Webcam_gui(QWidget):
 
         self.main_layout.addWidget(self.group_item, 1, 1)
         self.group_item.setLayout(self.item_layout)
-        self.item_layout.addWidget(self.position_text, 0, 0, 1, 4)
-        self.item_layout.addWidget(self.x_indicator, 1, 0)
-        self.item_layout.addWidget(self.x_value, 1, 1)
-        self.item_layout.addWidget(self.y_indicator, 1, 2)
-        self.item_layout.addWidget(self.y_value, 1, 3)
-        self.item_layout.addWidget(self.diameter_text, 2, 0, 1, 4)
-        self.item_layout.addWidget(self.diameter_value, 3, 0, 1, 4)
-        self.item_layout.addWidget(self.screen_text, 4, 0, 1, 2)
+        self.item_layout.addWidget(self.resolution_display, 0, 0, 1, 4)
+        self.item_layout.addWidget(self.resolution, 1, 0, 1, 4)
+        self.item_layout.addWidget(self.fps_display, 2, 0, 1, 4)
+        self.item_layout.addWidget(self.fps, 3, 0, 1, 4)
+        self.item_layout.addWidget(self.position_text, 4, 0, 1, 4)
+        self.item_layout.addWidget(self.x_indicator, 5, 0)
+        self.item_layout.addWidget(self.x_value, 5, 1)
+        self.item_layout.addWidget(self.y_indicator, 5, 2)
+        self.item_layout.addWidget(self.y_value, 5, 3)
+        self.item_layout.addWidget(self.diameter_text, 6, 0, 1, 4)
+        self.item_layout.addWidget(self.diameter_value, 7, 0, 1, 4)
+        self.item_layout.addWidget(self.screen_text, 8, 0, 1, 2)
 
-        self.item_layout.addLayout(self.arrow_layout, 4, 2, 1, 2, Qt.AlignRight)
+        self.item_layout.addLayout(self.arrow_layout, 8, 2, 1, 2, Qt.AlignRight)
         self.arrow_layout.addWidget(self.arrow_top, 0, 1)
         self.arrow_layout.addWidget(self.arrow_right, 1, 2)
         self.arrow_layout.addWidget(self.arrow_bot, 2, 1)
@@ -151,6 +174,20 @@ class Webcam_gui(QWidget):
         self.time_layout.addWidget(self.iterations_sec)
 
         self.main_layout.addWidget(self.button_tracking, 3, 1)
+
+        self.main_layout.addWidget(self.draw_box, 4, 1)
+        self.draw_box.setLayout(self.draw_layout)
+        self.draw_layout.addWidget(self.point_text, 0, 0)
+        self.draw_layout.addWidget(self.check_points, 0, 1)
+        self.draw_layout.addWidget(self.squares_text, 1, 0)
+        self.draw_layout.addWidget(self.check_squares, 1, 1)
+        self.draw_layout.addWidget(self.center_text, 2, 0)
+        self.draw_layout.addWidget(self.check_center, 2, 1)
+        self.draw_layout.addWidget(self.draw_size, 3, 0, 1, 2)
+        self.draw_layout.addWidget(self.draw_size_slider, 4, 0)
+        self.draw_layout.addWidget(self.draw_size_display_value, 4, 1)
+        self.draw_layout.addWidget(self.slow_motion_text, 5, 0)
+        self.draw_layout.addWidget(self.slow_box, 5, 1)
 
         self.hover_color.setFixedSize(80, 40)
         self.min_color.setFixedSize(80, 40)
@@ -185,15 +222,29 @@ class Webcam_gui(QWidget):
         self.arrow_bot.setPixmap(self.bot_pixmap_off)
         self.arrow_left.setPixmap(self.left_pixmap_off)
 
+        self.draw_size_slider.setOrientation(Qt.Horizontal)
+        self.draw_size_slider.setRange(1, 20)
+        self.draw_size_slider.setValue(self.pen_size)
+        self.draw_size_slider.setPageStep(1)
+        self.draw_size_slider.setCursor(Qt.PointingHandCursor)
+        self.check_squares.setChecked(True)
+        self.check_center.setChecked(True)
+
         self.color_slider.valueChanged.connect(self.apply_color_range)
         self.graphic_view_picker.messager.transfert_position.connect(self.hover_position)
         self.graphic_view_picker.messager.pixel_selected.connect(self.new_color_clicked)
         self.graphic_view_picker.messager.pixel_selected.connect(self.new_color_clicked)
         self.button_tracking.clicked.connect(self.button_track_clicked)
 
+        self.draw_size_slider.valueChanged.connect(self.apply_draw_value)
+        self.check_points.stateChanged.connect(self.apply_show_points)
+        self.check_squares.stateChanged.connect(self.apply_show_squares)
+        self.check_center.stateChanged.connect(self.apply_show_centers)
+        self.slow_box.stateChanged.connect(self.apply_is_slow_motion)
+
     def set_up_camera(self):
         self.my_thread = Thread(self)
-        self.my_thread.camera_size.connect(self.set_up_camera_size)
+        self.my_thread.camera_param.connect(self.set_up_camera_param)
         self.my_thread.change_pixmap.connect(self.setImage)
         self.my_thread.change_map.connect(self.set_map)
         self.my_thread.start()
@@ -212,17 +263,23 @@ class Webcam_gui(QWidget):
         if self.run_tracking:
             count = time.time()
             data_shape = cam_tracker(self.current_map)
-            self.shape.build(data_shape[0], data_shape[1], data_shape[2], data_shape[3])
+
+            if self.slow_motion:
+                if self.timer_count > 5:
+                    self.shape.build(data_shape[0], data_shape[1], data_shape[2], data_shape[3], data_shape[4])
+            else:
+                self.shape.build(data_shape[0], data_shape[1], data_shape[2], data_shape[3], data_shape[4])
+
             self.draw_shape()
-            self.apply_new_color(data_shape[4])
+            self.apply_new_color(data_shape[5])
             self.paint_arrow()
 
-            self.timer_count += 1
-            if self.timer_count > 5:
+            if self.timer_count > 6:
                 self.update_item_box()
                 self.timer_display.setText(str(round(time.time() - count, 5)))
                 self.iterations_sec.setText(str(round(1/(time.time() - count))))
                 self.timer_count = 0
+            self.timer_count += 1
 
     @Slot(int, int)
     def hover_position(self, x, y):
@@ -270,16 +327,24 @@ class Webcam_gui(QWidget):
         self.top_color.setPixmap(pix_color)
 
     def draw_shape(self):
+        color_points = QPen("#ffffff")
+        color_points.setWidth(self.pen_size)
         color_square = QPen("#ff0048")
-        color_square.setWidth(5)
+        color_square.setWidth(self.pen_size)
         color_middle = QPen("#0084ff")
-        color_middle.setWidth(5)
+        color_middle.setWidth(self.pen_size)
         middle_width = 10
 
-        self.graphic_scene.addRect(QRect(self.shape.top_left[0], self.shape.top_left[1], self.shape.width, self.shape.height), color_square)
-
-        self.graphic_scene.addLine(self.shape.center[0] - middle_width, self.shape.center[1], self.shape.center[0] + middle_width, self.shape.center[1], color_middle)
-        self.graphic_scene.addLine(self.shape.center[0], self.shape.center[1] - middle_width, self.shape.center[0], self.shape.center[1] + middle_width, color_middle)
+        if self.show_points:
+            points = self.shape.points
+            for i in range(len(self.shape.points)):
+                self.graphic_scene.addLine(points[i][0] - self.pen_size, points[i][1], points[i][0] + self.pen_size, points[i][1], color_points)
+                self.graphic_scene.addLine(points[i][0], points[i][1] - self.pen_size, points[i][0], points[i][1] + self.pen_size, color_points)
+        if self.show_rect:
+            self.graphic_scene.addRect(QRect(self.shape.top_left[0], self.shape.top_left[1], self.shape.width, self.shape.height), color_square)
+        if self.show_center:
+            self.graphic_scene.addLine(self.shape.center[0] - middle_width, self.shape.center[1], self.shape.center[0] + middle_width, self.shape.center[1], color_middle)
+            self.graphic_scene.addLine(self.shape.center[0], self.shape.center[1] - middle_width, self.shape.center[0], self.shape.center[1] + middle_width, color_middle)
 
 
     def __del__(self):
@@ -292,6 +357,7 @@ class Webcam_gui(QWidget):
         self.color_value_label.setText(str(value))
         new_color_range(value)
 
+
     def update_item_box(self):
         self.x_value.setText(str(int(self.shape.center[0])))
         self.y_value.setText(str(int(self.shape.center[1])))
@@ -303,14 +369,17 @@ class Webcam_gui(QWidget):
 
 
     @Slot(list)
-    def set_up_camera_size(self, size):
-        self.camera_size = size
-        self.graphic_view_picker.setFixedSize(size[0], size[1])
+    def set_up_camera_param(self, data):
+        self.camera_size = data
+        self.graphic_view_picker.setFixedSize(data[0], data[1])
 
-        self.top_side = [0, int((size[1]/5) * 2)]
-        self.right_side = [int((size[0]/5) * 3), int(size[0])]
-        self.bot_side = [int((size[1]/5) * 3), int(size[1])]
-        self.left_side = [0, int((size[0] / 5) * 2)]
+        self.top_side = [0, int((data[1]/5) * 2)]
+        self.right_side = [int((data[0]/5) * 3), int(data[0])]
+        self.bot_side = [int((data[1]/5) * 3), int(data[1])]
+        self.left_side = [0, int((data[0] / 5) * 2)]
+
+        self.resolution.setText(str(int(data[0])) + " x " + str(int(data[1])))
+        self.fps.setText(str(int(data[2])))
 
 
     @Slot()
@@ -345,5 +414,39 @@ class Webcam_gui(QWidget):
             self.arrow_top.setPixmap(self.top_pixmap_off)
 
 
+    @Slot(int)
+    def apply_draw_value(self, value):
+        self.pen_size = value
+        self.draw_size_display_value.setText(str(value))
 
 
+    @Slot(int)
+    def apply_show_points(self, value):
+        if value == 2:
+            self.show_points = True
+        else:
+            self.show_points = False
+
+
+    @Slot(int)
+    def apply_show_squares(self, value):
+        if value == 2:
+            self.show_rect = True
+        else:
+            self.show_rect = False
+
+
+    @Slot(int)
+    def apply_show_centers(self, value):
+        if value == 2:
+            self.show_center = True
+        else:
+            self.show_center = False
+
+
+    @Slot(int)
+    def apply_is_slow_motion(self, value):
+        if value == 2:
+            self.slow_motion = True
+        else:
+            self.slow_motion = False
