@@ -23,7 +23,7 @@ class Image_gui(QWidget):
         self.max_color = (0, 255, 84)
         self.color_range = 0
         self.looking_for_new_color = False
-        self.image_url = "banana.jpg"
+        self.image_url = "images/banana.jpg"
         self.low_pixmap = QPixmap()
 
         self.mainGridLayout = QGridLayout(self)
