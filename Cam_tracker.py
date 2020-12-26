@@ -88,7 +88,7 @@ def cam_tracker(pixel_map):
             else:
                 y = 1
                 matched = False
-                while y < 10:
+                while y < 5:
                     if validate_pixel(pixel_map, positions[i][1] + (variations[i][1] * y), positions[i][0] + (variations[i][0] * y)):
                         positions[i][0] += (variations[i][0] * y)
                         positions[i][1] += (variations[i][1] * y)
@@ -104,21 +104,33 @@ def cam_tracker(pixel_map):
     last_x = left[0] + int(((right[0] - left[0])/2))  # NEXT STARTER
     last_y = top[1] + int(((bot[1] - top[1])/2))
 
-    if left[0] > top_left[0]:  # CORNERS TO LARGEST WAY
+    if left[0] < top_left[0]:  # CORNERS TO LARGEST WAY
         top_left[0] = left[0]
-    if top[1] > top_left[1]:
+    if bot_left[0] < top_left[0]:
+        top_left[0] = bot_left[0]
+    if top[1] < top_left[1]:
         top_left[1] = top[1]
+    if top_right[1] < top_left[1]:
+        top_left[1] = top_right[1]
 
     if right[0] > bot_right[0]:
         bot_right[0] = right[0]
+    if top_right[0] > bot_right[0]:
+        bot_right[0] = top_right[0]
     if bot[1] > bot_right[1]:
         bot_right[1] = bot[1]
+    if bot_left[1] > bot_right[1]:
+        bot_right[1] = bot_left[1]
 
     new_diameter = 0
-    if bot_right[0] - top_left[0] > 10:  # FIND MIN DIAMETER
-        new_diameter = bot_right[0] - top_left[0]
-    if new_diameter > bot_right[1] - top_left[1] > 10:
-        new_diameter = bot_right[1] - top_left[1]
+    if right[0] - left[0] > 10:  # FIND MIN DIAMETER
+        new_diameter = right[0] - left[0]
+    if new_diameter > bot[1] - top[1] > 10:
+        new_diameter = bot[1] - top[1]
+    if new_diameter > top_right[0] - bot_left[0] > 10:
+        new_diameter = top_right[0] - bot_left[0]
+    if new_diameter > bot_left[1] - top_right[1] > 10:
+        new_diameter = bot_left[1] - top_right[1]
 
     if new_diameter > 10:
         min_diameter += (new_diameter - min_diameter) * 0.01

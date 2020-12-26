@@ -178,6 +178,8 @@ class Webcam_gui(QWidget):
         self.bot_pixmap_on = self.bot_pixmap_on.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.left_pixmap_on = self.left_pixmap_on.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
+        self.time_layout.setAlignment(Qt.AlignTop)
+
         self.arrow_top.setPixmap(self.top_pixmap_off)
         self.arrow_right.setPixmap(self.right_pixmap_off)
         self.arrow_bot.setPixmap(self.bot_pixmap_off)
@@ -269,9 +271,9 @@ class Webcam_gui(QWidget):
 
     def draw_shape(self):
         color_square = QPen("#ff0048")
-        color_square.setWidth(2)
+        color_square.setWidth(5)
         color_middle = QPen("#0084ff")
-        color_middle.setWidth(2)
+        color_middle.setWidth(5)
         middle_width = 10
 
         self.graphic_scene.addRect(QRect(self.shape.top_left[0], self.shape.top_left[1], self.shape.width, self.shape.height), color_square)
