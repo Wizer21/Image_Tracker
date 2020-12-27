@@ -23,6 +23,9 @@ class Main_gui(QMainWindow):
         self.ini_build()
 
     def ini_build(self):
+        self.setWindowTitle("Image Tracker")
+        self.setWindowIcon(QPixmap(".\\files\\target_dark.png"))
+
         self.setCentralWidget(self.main_widget)
         self.main_widget.setLayout(self.main_layout)
         self.main_layout.addWidget(self.stack)
@@ -40,10 +43,10 @@ class Main_gui(QMainWindow):
         self.image_action.setText("Image")
         self.webcam_action.setText("Webcam")
 
-        map = QPixmap(".\\images\\image.png")
+        map = QPixmap(".\\files\\image.png")
         map = map.scaled(30, 30, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.image_action.setIcon(map)
-        map.load(".\\images\\webcam.png")
+        map.load(".\\files\\webcam.png")
         map = map.scaled(30, 30, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.webcam_action.setIcon(map)
 

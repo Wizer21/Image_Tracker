@@ -6,7 +6,7 @@ if __name__ == "__main__":
 
     main_gui = Main_gui()
 
-    with open("theme.qss") as my_file:
+    with open(".\\files\\theme.qss") as my_file:
         theme = my_file.read()
         main_gui.setStyleSheet(theme)
 

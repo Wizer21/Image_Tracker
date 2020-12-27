@@ -107,14 +107,14 @@ class Webcam_gui(QWidget):
         self.bot_side = [0, 0]
         self.left_side = [0, 0]
 
-        self.top_pixmap_off = QPixmap(".\\images\\top_arrow_off.png")
-        self.right_pixmap_off = QPixmap(".\\images\\right_arrow_off.png")
-        self.bot_pixmap_off = QPixmap(".\\images\\bot_arrow_off.png")
-        self.left_pixmap_off = QPixmap(".\\images\\left_arrow_off.png")
-        self.top_pixmap_on = QPixmap(".\\images\\top_arrow.png")
-        self.right_pixmap_on = QPixmap(".\\images\\right_arrow.png")
-        self.bot_pixmap_on = QPixmap(".\\images\\bot_arrow.png")
-        self.left_pixmap_on = QPixmap(".\\images\\left_arrow.png")
+        self.top_pixmap_off = QPixmap(".\\files\\top_arrow_off.png")
+        self.right_pixmap_off = QPixmap(".\\files\\right_arrow_off.png")
+        self.bot_pixmap_off = QPixmap(".\\files\\bot_arrow_off.png")
+        self.left_pixmap_off = QPixmap(".\\files\\left_arrow_off.png")
+        self.top_pixmap_on = QPixmap(".\\files\\top_arrow.png")
+        self.right_pixmap_on = QPixmap(".\\files\\right_arrow.png")
+        self.bot_pixmap_on = QPixmap(".\\files\\bot_arrow.png")
+        self.left_pixmap_on = QPixmap(".\\files\\left_arrow.png")
 
         self.box_time = QGroupBox("Time", self)
         self.time_layout = QVBoxLayout(self)
@@ -279,6 +279,7 @@ class Webcam_gui(QWidget):
         self.arrow_left.setPixmap(self.left_pixmap_off)
 
         self.button_tracking.setCursor(Qt.PointingHandCursor)
+        self.button_tracking.setIcon(QPixmap(".\\files\\target.png"))
 
         self.draw_size_slider.setOrientation(Qt.Horizontal)
         self.draw_size_slider.setRange(1, 20)
@@ -315,10 +316,10 @@ class Webcam_gui(QWidget):
         self.diameter_calcul_button.setCursor(Qt.PointingHandCursor)
 
         try:
-            with open("presets.json", "r") as dataFile:
+            with open(".\\files\\presets.json", "r") as dataFile:
                 self.presets_list = json.load(dataFile)
         except FileNotFoundError:
-            with open("presets.json", "w") as dataFile:
+            with open(".\\files\\presets.json", "w") as dataFile:
                 self.presets_list["Default"] = {
                     "name": "Default",
                     "width": 1,
@@ -622,7 +623,7 @@ class Webcam_gui(QWidget):
         self.combo_presets.addItem(self.new_preset["name"])
         self.presets_list[self.new_preset["name"]] = self.new_preset
 
-        with open("presets.json", "w") as dataFile:
+        with open(".\\files\\presets.json", "w") as dataFile:
             json.dump(self.presets_list, dataFile)
 
         self.combo_presets.setCurrentText(self.new_preset["name"])
@@ -646,10 +647,7 @@ class Webcam_gui(QWidget):
 
 
     def diameter_from_range(self):
-        part0 = self.calibration_stack / self.calibration_count
-        pixels = self.current_preset["pixel"]
-        part_1 = pixels/part0
-        item_width = round(1/(part_1), 3)
+        item_width = round(1/(self.current_preset["pixel"] / (self.calibration_stack / self.calibration_count)), 3)
         self.diameter_edit.setText(str(item_width))
 
 
@@ -661,4 +659,4 @@ class Webcam_gui(QWidget):
     def display_range(self, current_diameter):
         if not current_diameter <= 0:
             distance = self.current_preset["distance"] * ((self.current_preset["pixel"] / current_diameter) * self.item_width)
-            self.distance_result.setText(str(distance))
+            self.distance_result.setText(str(round(distance, 3)) + " cm")
