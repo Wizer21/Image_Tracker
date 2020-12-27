@@ -14,7 +14,7 @@ QLabel {
 }
 
 QPushButton {
-    background-color: #161616;
+    background-color: #212121;
     padding: 5px;
     border: 0px solid red;
     font-size: 35px;
@@ -91,7 +91,7 @@ QSlider::add-page {
 /* ---------- Menu Bar ------- */
 /* ------------------------------ */
 QMenuBar {
-    background-color: rgb(66, 66, 66);    
+    background-color: #212121;
     min-height: 20px;
     border: 0px solid white;
   }

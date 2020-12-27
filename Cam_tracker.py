@@ -139,7 +139,7 @@ def cam_tracker(pixel_map):
 
     update_adaptive_color()
 
-    return top_left, bot_right, new_width, new_height, point_stack, adaptive_color
+    return top_left, bot_right, new_width, new_height, point_stack, adaptive_color, new_diameter
 
 
 def is_pixel_matching(pixel):
@@ -211,31 +211,24 @@ def define_starter(pixel_map):
     if validate_pixel(pixel_map, last_y, last_x):
         return
 
-    stepper = [[0, -step],
-             [+step, -step],
-             [+step, 0],
-             [+step, +step],
-             [0, +step],
-             [-step, +step],
-             [-step, 0],
-             [-step, -step]]
+    stepper = variations
 
     maxi_stepper = [[0, -step],
-                 [0, -step],
-                 [+step, -step],
-                 [+step, 0],
-                 [+step, 0],
-                 [+step, 0],
-                 [+step, +step],
-                 [0, +step],
-                 [0, +step],
-                 [0, +step],
-                 [-step, +step],
-                 [-step, 0],
-                 [-step, 0],
-                 [-step, 0],
-                 [-step, -step],
-                 [0, -step]]
+                    [0, -step],
+                    [+step, -step],
+                    [+step, 0],
+                    [+step, 0],
+                    [+step, 0],
+                    [+step, +step],
+                    [0, +step],
+                    [0, +step],
+                    [0, +step],
+                    [-step, +step],
+                    [-step, 0],
+                    [-step, 0],
+                    [-step, 0],
+                    [-step, -step],
+                    [0, -step]]
 
     for y in range(4):
 
