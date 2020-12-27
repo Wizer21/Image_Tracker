@@ -2,12 +2,12 @@
 
 This program allows you to find complex shapes from an image, depending on their color
 
-# Algorithm
+# Image
 ## Explore the pixel map
  - The program crosses every line of the map to find lines which are matching* the chosen color
  - Lines are stored in a dictionnary with their Y position as keys
  
-## Rows ompilation 
+## Rows compilation 
  - The program crosses every row, step* by step and check if the current row's Y position is already in the dictionnary
  - In this case, new rows are stored in a list of temporary shapes
  - Every new line added in a temparory shape will become the key for joining the latter
@@ -20,12 +20,26 @@ This program allows you to find complex shapes from an image, depending on their
 If my shape is not perfectly monochrome, such as a red book that contains white text, this will create multiple shapes
 So I might activate this option to compile nearby shapes 
 - It will examine every shape and check if they have common Top/Left and Bottom/Right points
- 
- 
+     
+# Video
+
+## Initiation
+
+By clicking on the image, the algorithm will get the pixel table of our image, the position of pixel clicked and its color. 
+
+## Tracking
+
+- At every frame the algorithm will, from the previous position, search in 8 directions until pixels do not match anymore the selected color.
+- This way the algorithm will get 8 positions that will allow it to build a shape structure with corners positions, width, height and center.
+- Every time a pixel color matches, its rgb will be added to a stack that is divided by the number of pixels the latter contains to continuously set an average color. This way, the algorithm will handle brightness variations.
+
+# Notes
+
  *matching: the user selects a pixel from the image and an acceptable range  
     - The rgb(12, 150, 255), with a range of 10, will include pixels that have rgb between (2, 140, 245) and (22, 160, 255)  
  *step: int value selected by the user  
     - The step represents the X distance between every analysis  
-    
         
-<img width="508" alt="imagetracker" src="https://user-images.githubusercontent.com/72104477/102719846-b9b28200-42f0-11eb-821c-af5988e5fef0.png"><img width="1136" alt="bananatracker" src="https://user-images.githubusercontent.com/72104477/102719762-4b6dbf80-42f0-11eb-9915-743fc8040181.png">
+<img width="1000" alt="green" src="https://drive.google.com/uc?export=view&id=1UDICYAB0Oj8HggUOFTqwQXG0FRzSw6Dp">
+<img width="1000" alt="banana" src="https://drive.google.com/uc?export=view&id=1WnfjQI9dpbuKydvDpJUSTkyOknuWZYap">
+<img width="1000" alt="gif" src="https://drive.google.com/uc?export=view&id=1mpBGipsDrsT5TO_yDlGrIN4OU3TMmTED">
