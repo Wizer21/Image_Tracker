@@ -23,7 +23,7 @@ class Image_gui(QWidget):
         self.max_color = (0, 255, 84)
         self.color_range = 0
         self.looking_for_new_color = False
-        self.image_url = "images/banana.jpg"
+        self.image_url = ".\\images/banana.jpg"
         self.low_pixmap = QPixmap()
 
         self.mainGridLayout = QGridLayout(self)
@@ -152,7 +152,7 @@ class Image_gui(QWidget):
 
         # Complete Settings
         self.button_new_file.setCursor(Qt.PointingHandCursor)
-        self.button_new_file.setIcon(QPixmap("images/newfile.png"))
+        self.button_new_file.setIcon(QPixmap(".\\images\\newfile.png"))
 
         self.scroll_step.setOrientation(Qt.Horizontal)  # STEP
         self.scroll_step.setRange(2, 40)
@@ -175,7 +175,7 @@ class Image_gui(QWidget):
 
         self.buttonLoad.setCursor(Qt.PointingHandCursor)  # LOAD
         self.box_isdynamic.setCursor(Qt.PointingHandCursor)
-        self.buttonLoad.setIcon(QPixmap("images/quickload.png"))
+        self.buttonLoad.setIcon(QPixmap(".\\images\\quickload.png"))
 
         self.borderlayout.setAlignment(Qt.AlignTop)
 

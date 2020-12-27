@@ -67,6 +67,7 @@ class Webcam_gui(QWidget):
         self.is_width_entered = False
         self.getting_width = False
         self.item_width = 0
+        self.distance_stack = 0
 
         self.main_layout = QGridLayout(self)
         self.graphic_scene = QGraphicsScene(self)
@@ -106,14 +107,14 @@ class Webcam_gui(QWidget):
         self.bot_side = [0, 0]
         self.left_side = [0, 0]
 
-        self.top_pixmap_off = QPixmap("images/top_arrow_off.png")
-        self.right_pixmap_off = QPixmap("images/right_arrow_off.png")
-        self.bot_pixmap_off = QPixmap("images/bot_arrow_off.png")
-        self.left_pixmap_off = QPixmap("images/left_arrow_off.png")
-        self.top_pixmap_on = QPixmap("images/top_arrow.png")
-        self.right_pixmap_on = QPixmap("images/right_arrow.png")
-        self.bot_pixmap_on = QPixmap("images/bot_arrow.png")
-        self.left_pixmap_on = QPixmap("images/left_arrow.png")
+        self.top_pixmap_off = QPixmap(".\\images\\top_arrow_off.png")
+        self.right_pixmap_off = QPixmap(".\\images\\right_arrow_off.png")
+        self.bot_pixmap_off = QPixmap(".\\images\\bot_arrow_off.png")
+        self.left_pixmap_off = QPixmap(".\\images\\left_arrow_off.png")
+        self.top_pixmap_on = QPixmap(".\\images\\top_arrow.png")
+        self.right_pixmap_on = QPixmap(".\\images\\right_arrow.png")
+        self.bot_pixmap_on = QPixmap(".\\images\\bot_arrow.png")
+        self.left_pixmap_on = QPixmap(".\\images\\left_arrow.png")
 
         self.box_time = QGroupBox("Time", self)
         self.time_layout = QVBoxLayout(self)
@@ -156,7 +157,7 @@ class Webcam_gui(QWidget):
         self.distance_edit = QLineEdit(self)
         self.diameter_calcul_button = QPushButton("Calculate", self)
         self.diameter_edit = QLineEdit(self)
-        self.text_result_distance = QLabel("Distance", self)
+        self.text_result_distance = QLabel("Distance from camera", self)
         self.distance_result = QLabel("0", self)
 
         self.set_up_camera()
@@ -387,7 +388,12 @@ class Webcam_gui(QWidget):
                 self.update_item_box()
                 self.timer_display.setText(str(round(time.time() - count, 5)))
                 self.iterations_sec.setText(str(round(1/(time.time() - count))))
+                if self.is_width_entered:
+                    self.display_range(self.distance_stack / self.timer_count)
+                    self.distance_stack = 0
                 self.timer_count = 0
+
+            self.distance_stack += data_shape[6]
             self.timer_count += 1
 
             if self.calibration_on:
@@ -395,13 +401,14 @@ class Webcam_gui(QWidget):
                 self.calibration_stack += data_shape[6]
                 if self.calibration_count > 100:
                     self.calibration_on = False
-                    self.new_preset["pixel"] = (round(self.calibration_stack / self.calibration_count, 3))
                     if self.building_preset:
                         self.building_preset = False
                         self.build_preset()
                     elif self.getting_width:
                         self.getting_width = False
                         self.diameter_from_range()
+
+
 
 
     @Slot(int, int)
@@ -608,7 +615,8 @@ class Webcam_gui(QWidget):
 
 
     def build_preset(self):
-        self.new_preset["pixel"] = round(self.new_preset["pixel"] * (1/self.new_preset["width"]), 3)
+        pixels_value = (self.calibration_stack / self.calibration_count)
+        self.new_preset["pixel"] = round(pixels_value * (1/self.new_preset["width"]), 3)
         self.new_preset["width"] = 1
 
         self.combo_presets.addItem(self.new_preset["name"])
@@ -617,6 +625,7 @@ class Webcam_gui(QWidget):
         with open("presets.json", "w") as dataFile:
             json.dump(self.presets_list, dataFile)
 
+        self.combo_presets.setCurrentText(self.new_preset["name"])
         self.set_current_preset(self.new_preset["name"])
 
 
@@ -637,9 +646,19 @@ class Webcam_gui(QWidget):
 
 
     def diameter_from_range(self):
-        item_width = round(1/(self.current_preset["pixel"]/(self.calibration_stack / self.calibration_count)), 3)
+        part0 = self.calibration_stack / self.calibration_count
+        pixels = self.current_preset["pixel"]
+        part_1 = pixels/part0
+        item_width = round(1/(part_1), 3)
         self.diameter_edit.setText(str(item_width))
 
 
     def set_new_item_width(self):
         self.item_width = float(self.diameter_edit.text())
+        self.is_width_entered = True
+
+
+    def display_range(self, current_diameter):
+        if not current_diameter <= 0:
+            distance = self.current_preset["distance"] * ((self.current_preset["pixel"] / current_diameter) * self.item_width)
+            self.distance_result.setText(str(distance))
