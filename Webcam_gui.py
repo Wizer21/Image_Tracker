@@ -58,10 +58,15 @@ class Webcam_gui(QWidget):
         self.pen_size = 5
         self.slow_motion = False
         self.calibration_on = False
+        self.building_preset = False
         self.calibration_stack = 0
         self.calibration_count = 0
         self.new_preset = {}
         self.presets_list = {}
+        self.current_preset = {}
+        self.is_width_entered = False
+        self.getting_width = False
+        self.item_width = 0
 
         self.main_layout = QGridLayout(self)
         self.graphic_scene = QGraphicsScene(self)
@@ -140,7 +145,7 @@ class Webcam_gui(QWidget):
         self.calibrate_layout = QGridLayout(self)
         self.presets_text = QLabel("Presets", self)
         self.combo_presets = QComboBox(self)
-        self.ratio_current_preset = QLabel("0cm at 10cm = 0px", self)
+        self.ratio_current_preset = QLabel("No presets", self)
         self.name_edit = QLineEdit(self)
         self.width_edit_calib = QLineEdit(self)
         self.distance_edit_calib = QLineEdit(self)
@@ -149,9 +154,8 @@ class Webcam_gui(QWidget):
         self.text_shape_diameter = QLabel("My Item Diameter", self)
         self.text_distance = QLabel("From Distance", self)
         self.distance_edit = QLineEdit(self)
-        self.text_diameter = QLabel("From Diameter", self)
+        self.diameter_calcul_button = QPushButton("Calculate", self)
         self.diameter_edit = QLineEdit(self)
-        self.button_find = QPushButton("Find", self)
         self.text_result_distance = QLabel("Distance", self)
         self.distance_result = QLabel("0", self)
 
@@ -235,9 +239,8 @@ class Webcam_gui(QWidget):
         self.distance_layout.addWidget(self.text_shape_diameter, 1, 0, 1, 2)
         self.distance_layout.addWidget(self.text_distance, 2, 0)
         self.distance_layout.addWidget(self.distance_edit, 2, 1)
-        self.distance_layout.addWidget(self.text_diameter, 3, 0)
-        self.distance_layout.addWidget(self.diameter_edit, 3, 1)
-        self.distance_layout.addWidget(self.button_find, 4, 0, 1, 2)
+        self.distance_layout.addWidget(self.diameter_calcul_button, 3, 0, 1, 2)
+        self.distance_layout.addWidget(self.diameter_edit, 4, 0, 1, 2)
         self.distance_layout.addWidget(self.text_result_distance, 5, 0, 1, 2)
         self.distance_layout.addWidget(self.distance_result, 6, 0, 1, 2)
 
@@ -288,11 +291,13 @@ class Webcam_gui(QWidget):
         self.check_center.setCursor(Qt.PointingHandCursor)
         self.slow_box.setCursor(Qt.PointingHandCursor)
 
-        self.name_edit.setPlaceholderText("Preset 1")  # DISTANCE
+        self.distance_layout.setAlignment(Qt.AlignTop)  # DISTANCE
+
+        self.name_edit.setPlaceholderText("Preset 1")
         self.width_edit_calib.setPlaceholderText("Width cm")
         self.distance_edit_calib.setPlaceholderText("Dist. cm")
         self.distance_edit.setPlaceholderText("Dist. cm")
-        self.diameter_edit.setPlaceholderText("Width in cm")
+        self.diameter_edit.setPlaceholderText("Item, min diameter possible")
 
         self.width_edit_calib.setToolTip("Item width in cm")
         self.distance_edit_calib.setToolTip("Distance from the camera in cm")
@@ -306,20 +311,32 @@ class Webcam_gui(QWidget):
         self.distance_edit.setCursor(Qt.PointingHandCursor)
         self.diameter_edit.setCursor(Qt.PointingHandCursor)
         self.save_button.setCursor(Qt.PointingHandCursor)
-        self.button_find.setCursor(Qt.PointingHandCursor)
+        self.diameter_calcul_button.setCursor(Qt.PointingHandCursor)
 
         try:
             with open("presets.json", "r") as dataFile:
                 self.presets_list = json.load(dataFile)
         except FileNotFoundError:
-            with open(".\presets.json", "w") as dataFile:
+            with open("presets.json", "w") as dataFile:
+                self.presets_list["Default"] = {
+                    "name": "Default",
+                    "width": 1,
+                    "distance": 10,
+                    "pixel": 20
+                }
                 json.dump(self.presets_list, dataFile)
             print("Presets file created")
+
+        for i in self.presets_list:
+            self.combo_presets.addItem(i)
+
+        self.set_current_preset(self.combo_presets.currentText())
 
         self.color_slider.valueChanged.connect(self.apply_color_range)  # CONNECTIONS
         self.graphic_view_picker.messager.transfert_position.connect(self.hover_position)
         self.graphic_view_picker.messager.pixel_selected.connect(self.new_color_clicked)
         self.graphic_view_picker.messager.pixel_selected.connect(self.new_color_clicked)
+        self.graphic_view_picker.messager.selecter_leaved.connect(self.picker_leaved)
         self.button_tracking.clicked.connect(self.button_track_clicked)
 
         self.draw_size_slider.valueChanged.connect(self.apply_draw_value)
@@ -329,12 +346,17 @@ class Webcam_gui(QWidget):
         self.slow_box.stateChanged.connect(self.apply_is_slow_motion)
 
         self.save_button.clicked.connect(self.new_preset_clicked)
+        self.combo_presets.textActivated.connect(self.set_current_preset)
+        self.diameter_calcul_button.clicked.connect(self.set_diameter_from_range)
+        self.diameter_edit.textChanged.connect(self.set_new_item_width)
+
 
     def set_up_camera(self):
         self.my_thread.camera_param.connect(self.set_up_camera_param)
         self.my_thread.change_pixmap.connect(self.setImage)
         self.my_thread.change_map.connect(self.set_map)
         self.my_thread.start()
+
 
     @Slot(QImage)
     def setImage(self, image):
@@ -371,11 +393,16 @@ class Webcam_gui(QWidget):
             if self.calibration_on:
                 self.calibration_count += 1
                 self.calibration_stack += data_shape[6]
-
                 if self.calibration_count > 100:
                     self.calibration_on = False
                     self.new_preset["pixel"] = (round(self.calibration_stack / self.calibration_count, 3))
-                    self.build_preset()
+                    if self.building_preset:
+                        self.building_preset = False
+                        self.build_preset()
+                    elif self.getting_width:
+                        self.getting_width = False
+                        self.diameter_from_range()
+
 
     @Slot(int, int)
     def hover_position(self, x, y):
@@ -385,6 +412,7 @@ class Webcam_gui(QWidget):
         pix_color.fill(QColor(self.hover_rgb[0], self.hover_rgb[1], self.hover_rgb[2]))
         self.hover_color.setPixmap(pix_color)
 
+
     @Slot(int, int)
     def new_color_clicked(self, x, y):
         self.apply_new_color(self.current_map[y][x])
@@ -392,6 +420,12 @@ class Webcam_gui(QWidget):
         new_pos(x, y, self.mid_rgb, self.color_range, len(self.current_map[0]), len(self.current_map))
         self.run_tracking = True
         self.button_tracking.setText("Tracking On")
+
+
+    @Slot()
+    def picker_leaved(self):
+        self.hover_color.clear()
+
 
     def apply_new_color(self, newcolor):
         pix_color = QPixmap(100, 100)
@@ -547,6 +581,7 @@ class Webcam_gui(QWidget):
         else:
             self.slow_motion = False
 
+
     @Slot()
     def new_preset_clicked(self):
         if len(self.name_edit.text()) == 0 or \
@@ -568,16 +603,43 @@ class Webcam_gui(QWidget):
 
         self.calibration_stack = 0
         self.calibration_count = 0
+        self.building_preset = True
         self.calibration_on = True
+
 
     def build_preset(self):
         self.new_preset["pixel"] = round(self.new_preset["pixel"] * (1/self.new_preset["width"]), 3)
         self.new_preset["width"] = 1
-        self.ratio_current_preset.setText(str(self.new_preset["width"]) + "cm at " + str(self.new_preset["distance"]) + "cm = " + str(self.new_preset["pixel"]) + "px")
 
         self.combo_presets.addItem(self.new_preset["name"])
-
         self.presets_list[self.new_preset["name"]] = self.new_preset
 
-        with open (".\presets.json", "w") as dataFile:
+        with open("presets.json", "w") as dataFile:
             json.dump(self.presets_list, dataFile)
+
+        self.set_current_preset(self.new_preset["name"])
+
+
+    @Slot(str)
+    def set_current_preset(self, preset_name):
+        self.current_preset = self.presets_list[preset_name]
+
+        preset = self.presets_list[preset_name]
+        self.ratio_current_preset.setText(str(preset["width"]) + "cm at " + str(round(preset["distance"], 2)) + "cm = " + str(preset["pixel"]) + "px")
+
+
+    @Slot(str)
+    def set_diameter_from_range(self, value):
+        self.calibration_stack = 0
+        self.calibration_count = 0
+        self.getting_width = True
+        self.calibration_on = True
+
+
+    def diameter_from_range(self):
+        item_width = round(1/(self.current_preset["pixel"]/(self.calibration_stack / self.calibration_count)), 3)
+        self.diameter_edit.setText(str(item_width))
+
+
+    def set_new_item_width(self):
+        self.item_width = float(self.diameter_edit.text())

@@ -27,3 +27,4 @@ class Temporary_shape:
         for i in range(len(self.entries)):
             self.point_list.append(self.entries[i][0])
             self.point_list.append(self.entries[i][1])
+
