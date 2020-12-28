@@ -6,7 +6,7 @@ from Webcam_gui import *
 
 
 class Main_gui(QMainWindow):
-    def __init__(self):
+    def __init__(self, resolution):
         QMainWindow.__init__(self)
         self.main_widget = QWidget(self)
         self.main_layout = QVBoxLayout(self)
@@ -17,8 +17,8 @@ class Main_gui(QMainWindow):
         self.webcam_action = QAction(self)
 
         self.stack = QStackedWidget(self)
-        self.image_build = Image_gui()
-        self.webcam_gui = Webcam_gui()
+        self.image_build = Image_gui(resolution)
+        self.webcam_gui = Webcam_gui(resolution)
 
         self.ini_build()
 

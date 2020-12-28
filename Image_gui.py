@@ -9,8 +9,9 @@ from LabelPicker import *
 
 
 class Image_gui(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, myresolution, parent=None):
         QWidget.__init__(self, parent=parent)
+        self.resolution = myresolution
         self.step = 0
         self.my_color = (0, 0, 0)
         self.map = 0
@@ -356,9 +357,30 @@ class Image_gui(QWidget):
         self.graphic_view.setScene(self.scene)
 
     def load_image(self):
-        image = QImage(self.image_url)
-        painter = QPainter()
+        image = QImage(self.image_url)  # GET QIMAGE
+        my_image = Image.open(self.image_url)  # PIL PIXEL MAP
 
+        self.size = my_image.size
+        if self.size[0] >= self.size[1]:  # width up
+            ratio = self.size[1] / self.size[0]
+            final_size = (int(self.resolution[0] / 3), int((self.resolution[0] / 3) * ratio))
+
+            self.mainGridLayout.addWidget(self.graphic_view, 1, 0)
+            self.mainGridLayout.addWidget(self.settingswidget, 0, 1, 2, 1)
+        else:  # height up
+            ratio = self.size[0] / self.size[1]
+            final_size = (int(self.resolution[1] / 2 * ratio), int((self.resolution[1] / 2)))
+
+            self.mainGridLayout.addWidget(self.graphic_view, 0, 1)
+            self.mainGridLayout.addWidget(self.settingswidget, 0, 2, 2, 1)
+
+        image = image.scaled(final_size[0], final_size[1], Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        my_image = my_image.resize(final_size)
+
+        self.map = my_image.load()
+        self.size = final_size
+
+        painter = QPainter()
         painter.begin(image)
         painter.setCompositionMode(QPainter.CompositionMode_DestinationIn)
         painter.fillRect(image.rect(), QColor(0, 0, 0, 50))
@@ -369,20 +391,11 @@ class Image_gui(QWidget):
         self.scene.addPixmap(self.low_pixmap)
         self.graphic_view.setScene(self.scene)
 
-        self.containImage.setPixmap(QPixmap(self.image_url))
-        self.my_image = Image.open(self.image_url)
-        self.map = self.my_image.load()
-        self.size = self.my_image.size
+        self.containImage.setPixmap(QPixmap(image))
 
         self.containImage.setFixedSize(self.size[0], self.size[1])
         self.graphic_view.setFixedSize(self.size[0], self.size[1])
 
-        if self.size[0] > self.size[1]:
-            self.mainGridLayout.addWidget(self.graphic_view, 1, 0)
-            self.mainGridLayout.addWidget(self.settingswidget, 0, 1, 2, 1)
-        else:
-            self.mainGridLayout.addWidget(self.graphic_view, 0, 1)
-            self.mainGridLayout.addWidget(self.settingswidget, 0, 2, 2, 1)
 
     def select_new_file(self):
         container = QFileDialog.getOpenFileName(self, "Open Image", "", "Image Files (*.png *.jpg)")

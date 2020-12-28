@@ -10,14 +10,19 @@ from Cam_tracker import *
 from Dynamic_shape import *
 import json
 
+
 class Thread(QThread):
     change_pixmap = Signal(QImage)
     change_map = Signal(list)
     camera_param = Signal(list)
 
+    def __init__(self, myresolution):
+        QThread.__init__(self)
+        self.resolution = myresolution
+
     def run(self):
-        my_width = 1920
-        my_height = 1080
+        my_width = self.resolution[0] / 2
+        my_height = self.resolution[1] / 2
         cap = cv2.VideoCapture(0)
 
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, my_width)
@@ -37,10 +42,11 @@ class Thread(QThread):
                 self.change_pixmap.emit(convertToQtFormat)
                 self.change_map.emit(rgbImage)
 
+
 class Webcam_gui(QWidget):
-    def __init__(self):
+    def __init__(self, resolution):
         QWidget.__init__(self)
-        self.my_thread = Thread(self)
+        self.my_thread = Thread(resolution)
         self.player_color = 0
         self.hover_rgb = 0
         self.min_rgb = (0, 0, 0)
@@ -72,6 +78,9 @@ class Webcam_gui(QWidget):
         self.main_layout = QGridLayout(self)
         self.graphic_scene = QGraphicsScene(self)
         self.graphic_view_picker = ViewPicker()
+
+        self.first_panel_right = QWidget(self)
+        self.first_panel_layout = QVBoxLayout(self)
 
         self.color_box = QGroupBox("Color", self)
         self.color_layout = QGridLayout(self)
@@ -139,6 +148,9 @@ class Webcam_gui(QWidget):
         self.slow_motion_text = QLabel("Slow motion", self)
         self.slow_box = QCheckBox(self)
 
+        self.second_panel_right = QWidget(self)
+        self.second_panel_layout = QVBoxLayout(self)
+
         self.distance_box = QGroupBox("Distance", self)  # DISTANCE
         self.distance_layout = QGridLayout(self)
 
@@ -167,9 +179,11 @@ class Webcam_gui(QWidget):
         self.setLayout(self.main_layout)
         self.main_layout.addWidget(self.graphic_view_picker, 0, 0, 5, 1)
 
-        self.main_layout.addWidget(self.color_box, 0, 1)
-        self.color_box.setLayout(self.color_layout)
+        self.main_layout.addWidget(self.first_panel_right, 0, 1)
+        self.first_panel_right.setLayout(self.first_panel_layout)
 
+        self.first_panel_layout.addWidget(self.color_box)
+        self.color_box.setLayout(self.color_layout)
         self.color_layout.addWidget(self.text_color, 0, 0, 1, 2)
         self.color_layout.addWidget(self.hover_color, 0, 2)
         self.color_layout.addWidget(self.min_color, 1, 0)
@@ -178,7 +192,7 @@ class Webcam_gui(QWidget):
         self.color_layout.addWidget(self.color_slider, 2, 0, 1, 2)
         self.color_layout.addWidget(self.color_value_label, 2, 2)
 
-        self.main_layout.addWidget(self.group_item, 1, 1)
+        self.first_panel_layout.addWidget(self.group_item)
         self.group_item.setLayout(self.item_layout)
         self.item_layout.addWidget(self.resolution_display, 0, 0, 1, 4)
         self.item_layout.addWidget(self.resolution, 1, 0, 1, 4)
@@ -199,32 +213,19 @@ class Webcam_gui(QWidget):
         self.arrow_layout.addWidget(self.arrow_bot, 2, 1)
         self.arrow_layout.addWidget(self.arrow_left, 1, 0)
 
-        self.main_layout.addWidget(self.box_time, 2, 1)
+        self.first_panel_layout.addWidget(self.box_time)
         self.box_time.setLayout(self.time_layout)
         self.time_layout.addWidget(self.calc_time)
         self.time_layout.addWidget(self.timer_display)
         self.time_layout.addWidget(self.text_possible_iterations)
         self.time_layout.addWidget(self.iterations_sec)
 
-        self.main_layout.addWidget(self.button_tracking, 3, 1)
+        self.first_panel_layout.addWidget(self.button_tracking)
 
-        self.main_layout.addWidget(self.draw_box, 4, 1)
-        self.draw_box.setLayout(self.draw_layout)
-        self.draw_layout.addWidget(self.check_points, 0, 0)
-        self.draw_layout.addWidget(self.point_text, 0, 1, 1, 2)
-        self.draw_layout.addWidget(self.check_squares, 1, 0)
-        self.draw_layout.addWidget(self.squares_text, 1, 1, 1, 2)
-        self.draw_layout.addWidget(self.check_center, 2, 0)
-        self.draw_layout.addWidget(self.center_text, 2, 1, 1, 2)
-        self.draw_layout.addWidget(self.draw_size, 3, 0, 1, 3)
-        self.draw_layout.addWidget(self.draw_size_slider, 4, 0, 1, 2)
-        self.draw_layout.addWidget(self.draw_size_display_value, 4, 2)
-        self.draw_layout.addWidget(self.slow_box, 5, 0)
-        self.draw_layout.addWidget(self.slow_motion_text, 5, 1, 1, 2)
-        self.draw_layout.setColumnStretch(0, 0)
-        self.draw_layout.setColumnStretch(1, 1)
+        self.main_layout.addWidget(self.second_panel_right, 0, 2, 2, 1)
+        self.second_panel_right.setLayout(self.second_panel_layout)
 
-        self.main_layout.addWidget(self.distance_box, 0, 2, 2, 1)  # DISTANCE
+        self.second_panel_layout.addWidget(self.distance_box)  # DISTANCE
         self.distance_box.setLayout(self.distance_layout)
         self.distance_layout.addWidget(self.calibrate_box, 0, 0, 1, 2)
 
@@ -245,6 +246,25 @@ class Webcam_gui(QWidget):
         self.distance_layout.addWidget(self.text_result_distance, 5, 0, 1, 2)
         self.distance_layout.addWidget(self.distance_result, 6, 0, 1, 2)
 
+        self.second_panel_layout.addWidget(self.draw_box)
+        self.draw_box.setLayout(self.draw_layout)
+        self.draw_layout.addWidget(self.check_points, 0, 0)
+        self.draw_layout.addWidget(self.point_text, 0, 1, 1, 2)
+        self.draw_layout.addWidget(self.check_squares, 1, 0)
+        self.draw_layout.addWidget(self.squares_text, 1, 1, 1, 2)
+        self.draw_layout.addWidget(self.check_center, 2, 0)
+        self.draw_layout.addWidget(self.center_text, 2, 1, 1, 2)
+        self.draw_layout.addWidget(self.draw_size, 3, 0, 1, 3)
+        self.draw_layout.addWidget(self.draw_size_slider, 4, 0, 1, 2)
+        self.draw_layout.addWidget(self.draw_size_display_value, 4, 2)
+        self.draw_layout.addWidget(self.slow_box, 5, 0)
+        self.draw_layout.addWidget(self.slow_motion_text, 5, 1, 1, 2)
+        self.draw_layout.setColumnStretch(0, 0)
+        self.draw_layout.setColumnStretch(1, 1)
+
+        self.first_panel_layout.setAlignment(Qt.AlignTop)
+        self.second_panel_layout.setAlignment(Qt.AlignTop)
+
         self.hover_color.setFixedSize(80, 40)
         self.min_color.setFixedSize(80, 40)
         self.mid_color.setFixedSize(80, 40)
@@ -262,14 +282,14 @@ class Webcam_gui(QWidget):
 
         self.item_layout.setAlignment(Qt.AlignTop)
         self.arrow_layout.setContentsMargins(0, 0, 0, 0)
-        self.top_pixmap_off = self.top_pixmap_off.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.right_pixmap_off = self.right_pixmap_off.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.bot_pixmap_off = self.bot_pixmap_off.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.left_pixmap_off = self.left_pixmap_off.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.top_pixmap_on = self.top_pixmap_on.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.right_pixmap_on = self.right_pixmap_on.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.bot_pixmap_on = self.bot_pixmap_on.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.left_pixmap_on = self.left_pixmap_on.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.top_pixmap_off = self.top_pixmap_off.scaled(25, 25, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.right_pixmap_off = self.right_pixmap_off.scaled(25, 25, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.bot_pixmap_off = self.bot_pixmap_off.scaled(25, 25, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.left_pixmap_off = self.left_pixmap_off.scaled(25, 25, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.top_pixmap_on = self.top_pixmap_on.scaled(25, 25, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.right_pixmap_on = self.right_pixmap_on.scaled(25, 25, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.bot_pixmap_on = self.bot_pixmap_on.scaled(25, 25, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.left_pixmap_on = self.left_pixmap_on.scaled(25, 25, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
         self.time_layout.setAlignment(Qt.AlignTop)
 
@@ -408,8 +428,6 @@ class Webcam_gui(QWidget):
                     elif self.getting_width:
                         self.getting_width = False
                         self.diameter_from_range()
-
-
 
 
     @Slot(int, int)
