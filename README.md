@@ -29,7 +29,7 @@ So I might activate this option to compile nearby shapes
 
 ## Initiation
 
-By clicking on the image, the algorithm will get the pixel clicked and start tracking it. 
+By clicking on the video, the algorithm will get the pixel clicked and start tracking it. 
 
 ## Tracking
 
