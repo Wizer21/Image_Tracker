@@ -21,11 +21,15 @@ If my shape is not perfectly monochrome, such as a red book that contains white 
 So I might activate this option to compile nearby shapes 
 - It will examine every shape and check if they have common Top/Left and Bottom/Right points
      
+<img width="1000" alt="Failure to load image, open there" src="https://drive.google.com/uc?export=view&id=1UDICYAB0Oj8HggUOFTqwQXG0FRzSw6Dp">
+<img width="1000" alt="Failure to load image, open there" src="https://drive.google.com/uc?export=view&id=1q5OCfY6mxUWCAMGVXeyO0GLxyW2rPKt4">
+
+
 # Video
 
 ## Initiation
 
-By clicking on the image, the algorithm will get the pixel table of our image, the position of pixel clicked and its color. 
+By clicking on the image, the algorithm will get the pixel clicked and start tracking it. 
 
 ## Tracking
 
@@ -40,6 +44,4 @@ By clicking on the image, the algorithm will get the pixel table of our image, t
  *step: int value selected by the user  
     - The step represents the X distance between every analysis  
         
-<img width="1000" alt="Failure to load image, open there" src="https://drive.google.com/uc?export=view&id=1UDICYAB0Oj8HggUOFTqwQXG0FRzSw6Dp">
-<img width="1000" alt="Failure to load image, open there" src="https://drive.google.com/uc?export=view&id=1q5OCfY6mxUWCAMGVXeyO0GLxyW2rPKt4">
 <img width="1000" alt="Failure to load gif, open there" src="https://drive.google.com/uc?export=view&id=1mpBGipsDrsT5TO_yDlGrIN4OU3TMmTED">
